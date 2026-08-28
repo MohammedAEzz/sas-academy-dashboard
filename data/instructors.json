@@ -1,0 +1,207 @@
+[
+  {
+    "instructor_id": "INS_001",
+    "instructor_name_clean": "Abdallah Aly",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_002",
+    "instructor_name_clean": "Abdeltawab Gira",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_003",
+    "instructor_name_clean": "Ahmed Abdelazeem",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_004",
+    "instructor_name_clean": "Ahmed Adel",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_005",
+    "instructor_name_clean": "Ahmed Daker",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_006",
+    "instructor_name_clean": "Ahmed Ehab",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_007",
+    "instructor_name_clean": "Ahmed Mabrouk",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_008",
+    "instructor_name_clean": "Ahmed Tealeb",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_009",
+    "instructor_name_clean": "Ammar Yasser",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_010",
+    "instructor_name_clean": "Anas Ahmed",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_011",
+    "instructor_name_clean": "Aya Elmalah",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_012",
+    "instructor_name_clean": "Bassem Selim",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_013",
+    "instructor_name_clean": "Berihan Elemary",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_014",
+    "instructor_name_clean": "Esraa Maged",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_015",
+    "instructor_name_clean": "Fatma Dwaam",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_016",
+    "instructor_name_clean": "Habiba Mohamed",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_017",
+    "instructor_name_clean": "Haitham Saleh",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_018",
+    "instructor_name_clean": "Hamdy Attallah",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_019",
+    "instructor_name_clean": "Heba Elsegaey",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_020",
+    "instructor_name_clean": "Hussein Elmasry",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_021",
+    "instructor_name_clean": "Iptihal Yousry",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_022",
+    "instructor_name_clean": "Mahmoud Elsahfae",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_023",
+    "instructor_name_clean": "Malak Abdelfattah",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_024",
+    "instructor_name_clean": "Mohamed Ezzeldeen",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_025",
+    "instructor_name_clean": "Mohamed Rabie",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_026",
+    "instructor_name_clean": "Mohamed Salah",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_027",
+    "instructor_name_clean": "Mohamed Tony",
+    "status": "Not Active"
+  },
+  {
+    "instructor_id": "INS_028",
+    "instructor_name_clean": "Mohamed Youssef",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_029",
+    "instructor_name_clean": "Moustafa Hassan",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_030",
+    "instructor_name_clean": "Nader Gamal",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_031",
+    "instructor_name_clean": "Osama Mobarez",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_032",
+    "instructor_name_clean": "Ragaa Nasr",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_033",
+    "instructor_name_clean": "Ragab Khamis",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_034",
+    "instructor_name_clean": "Rahma Khaled",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_035",
+    "instructor_name_clean": "Rawda Essam",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_036",
+    "instructor_name_clean": "Safa Mousa",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_037",
+    "instructor_name_clean": "Sara Samir",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_038",
+    "instructor_name_clean": "Shahd Abdelfattah",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_039",
+    "instructor_name_clean": "Shahd Essam",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_040",
+    "instructor_name_clean": "Shahd Moataz",
+    "status": "Active"
+  },
+  {
+    "instructor_id": "INS_041",
+    "instructor_name_clean": "Yasmeen Elfeky",
+    "status": "Active"
+  }
+]
