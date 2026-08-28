@@ -11,7 +11,13 @@
   "total_instructors": 41,
   "total_courses": 33,
   "total_feedback": 3742,
-  "feedback_instructor_match_rate": 38.2,
+  "total_feedback_expanded_rows": 3827,
+  "feedback_counting_rules": {
+    "global": "COUNT(DISTINCT feedback_id)",
+    "per_group": "COUNT(DISTINCT feedback_id) after group filter",
+    "per_instructor": "COUNT(DISTINCT feedback_id) after instructor filter"
+  },
+  "feedback_instructor_match_rate": 64.7,
   "clean_series_first_month": "2024-03",
   "forecast_excluded_low_date_confidence": 31,
   "analytics_files": {
