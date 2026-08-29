@@ -51,6 +51,11 @@
     "events_summary": 2,
     "diploma_summary": 2
   },
-  "comments_in_dashboard": false,
-  "comments_note": "Free-text comments omitted from dashboard JSON to avoid PII leakage"
+  "comments_in_dashboard": true,
+  "comments_note": "Student comments exported with email/9+ digit redaction applied. Residual self-identifying text may remain in free-text fields.",
+  "comments_non_empty_count": 2297,
+  "student_count_coverage": {
+    "activities_with_students": 171,
+    "total_activities": 989
+  }
 }

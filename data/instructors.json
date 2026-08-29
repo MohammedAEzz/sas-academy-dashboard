@@ -1,494 +1,412 @@
 [
   {
     "instructor_id": "INS_001",
-    "instructor_name_original": "Abdallah Aly",
     "instructor_name_clean": "Abdallah Aly",
-    "first_name_en": "Abdallah",
-    "last_name_en": "Aly",
     "full_name_ar": "م. عبد الله علي رمضان الكمشيشي",
     "system_name_ar": "م. عبد الله على",
+    "first_name_en": "Abdallah",
+    "last_name_en": "Aly",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_002",
-    "instructor_name_original": "Abdeltawab Gira",
     "instructor_name_clean": "Abdeltawab Gira",
-    "first_name_en": "Abdeltawab",
-    "last_name_en": "Gira",
     "full_name_ar": "د. عبدالتواب احمد جيره",
     "system_name_ar": "د.عبد التواب احمد عبد العزيز",
+    "first_name_en": "Abdeltawab",
+    "last_name_en": "Gira",
     "title": "Dr.",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_003",
-    "instructor_name_original": "Ahmed Abdelazeem",
     "instructor_name_clean": "Ahmed Abdelazeem",
-    "first_name_en": "Ahmed",
-    "last_name_en": "Abdelazeem",
     "full_name_ar": "م. أحمد محمدعبدالعظيم منصور",
     "system_name_ar": "م. احمد عبد العظيم",
+    "first_name_en": "Ahmed",
+    "last_name_en": "Abdelazeem",
     "title": "Eng.",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_004",
-    "instructor_name_original": "Ahmed Adel",
     "instructor_name_clean": "Ahmed Adel",
-    "first_name_en": "Ahmed",
-    "last_name_en": "Adel",
     "full_name_ar": "م. أحمد عادل  محمد السيد خليل",
     "system_name_ar": "م. احمد عادل",
+    "first_name_en": "Ahmed",
+    "last_name_en": "Adel",
     "title": "Eng.",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_005",
-    "instructor_name_original": "Ahmed Daker",
     "instructor_name_clean": "Ahmed Daker",
-    "first_name_en": "Ahmed",
-    "last_name_en": "Daker",
     "full_name_ar": "د. احمد محمد عبدالمجيد داكر",
     "system_name_ar": "د. احمد داكر",
+    "first_name_en": "Ahmed",
+    "last_name_en": "Daker",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_006",
-    "instructor_name_original": "Ahmed Ehab",
     "instructor_name_clean": "Ahmed Ehab",
-    "first_name_en": "Ahmed",
-    "last_name_en": "Ehab",
     "full_name_ar": "م. أحمد إيهاب محمد سعيد",
     "system_name_ar": "م. احمد ايهاب",
+    "first_name_en": "Ahmed",
+    "last_name_en": "Ehab",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_007",
-    "instructor_name_original": "Ahmed Mabrouk",
     "instructor_name_clean": "Ahmed Mabrouk",
-    "first_name_en": "Ahmed",
-    "last_name_en": "Mabrouk",
     "full_name_ar": "م. احمد مبروك احمد سعيد",
     "system_name_ar": "م. احمد مبروك احمد سعيد",
+    "first_name_en": "Ahmed",
+    "last_name_en": "Mabrouk",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_008",
-    "instructor_name_original": "Ahmed Tealeb",
     "instructor_name_clean": "Ahmed Tealeb",
-    "first_name_en": "Ahmed",
-    "last_name_en": "Tealeb",
     "full_name_ar": "د. احمد محمد جمال الدين المحمدي عبدالمقصود",
     "system_name_ar": "د. احمد تعيلب",
+    "first_name_en": "Ahmed",
+    "last_name_en": "Tealeb",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_009",
-    "instructor_name_original": "Ammar Yasser",
     "instructor_name_clean": "Ammar Yasser",
-    "first_name_en": "Ammar",
-    "last_name_en": "Yasser",
     "full_name_ar": "م. عمار ياسر محمد سلام",
     "system_name_ar": "م. عمار ياسر",
+    "first_name_en": "Ammar",
+    "last_name_en": "Yasser",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_010",
-    "instructor_name_original": "Anas Ahmed",
     "instructor_name_clean": "Anas Ahmed",
-    "first_name_en": "Anas",
-    "last_name_en": "Ahmed",
     "full_name_ar": "م. أنس أحمد زكريا محمد",
     "system_name_ar": "م. انس احمد",
+    "first_name_en": "Anas",
+    "last_name_en": "Ahmed",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_011",
-    "instructor_name_original": "Aya Elmalah",
     "instructor_name_clean": "Aya Elmalah",
-    "first_name_en": "Aya",
-    "last_name_en": "Elmalah",
     "full_name_ar": "م. آيه مرسي سعد محمد الملاح",
     "system_name_ar": "م. ايه الملاح",
+    "first_name_en": "Aya",
+    "last_name_en": "Elmalah",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_012",
-    "instructor_name_original": "Bassem Selim",
     "instructor_name_clean": "Bassem Selim",
-    "first_name_en": "Bassem",
-    "last_name_en": "Selim",
     "full_name_ar": "د. باسم ابراهيم عيسوي سليم",
     "system_name_ar": "د. باسم سليم",
+    "first_name_en": "Bassem",
+    "last_name_en": "Selim",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_013",
-    "instructor_name_original": "Berihan Elemary",
     "instructor_name_clean": "Berihan Elemary",
-    "first_name_en": "Berihan",
-    "last_name_en": "Elemary",
     "full_name_ar": "د. بريهان محمد رشاد العمري",
     "system_name_ar": "د. بريهان العمرى",
+    "first_name_en": "Berihan",
+    "last_name_en": "Elemary",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_014",
-    "instructor_name_original": "Esraa Maged",
     "instructor_name_clean": "Esraa Maged",
-    "first_name_en": "Esraa",
-    "last_name_en": "Maged",
     "full_name_ar": "م. إسراء ماجد سليمان نصار",
     "system_name_ar": "م. اسراء ماجد",
+    "first_name_en": "Esraa",
+    "last_name_en": "Maged",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_015",
-    "instructor_name_original": "Fatma Dwaam",
     "instructor_name_clean": "Fatma Dwaam",
-    "first_name_en": "Fatma",
-    "last_name_en": "Dwaam",
     "full_name_ar": "د. فاطمة دوام",
     "system_name_ar": "د.فاطمه دوام",
+    "first_name_en": "Fatma",
+    "last_name_en": "Dwaam",
     "title": "Dr.",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_016",
-    "instructor_name_original": "Habiba Mohamed",
     "instructor_name_clean": "Habiba Mohamed",
-    "first_name_en": "Habiba",
-    "last_name_en": "Mohamed",
     "full_name_ar": "م. حبيبة محمد علي محمد علي",
     "system_name_ar": "م. حبيبة محمد",
+    "first_name_en": "Habiba",
+    "last_name_en": "Mohamed",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_017",
-    "instructor_name_original": "Haitham Saleh",
     "instructor_name_clean": "Haitham Saleh",
-    "first_name_en": "Haitham",
-    "last_name_en": "Saleh",
     "full_name_ar": "م. هيثم سيد صالح مراد",
     "system_name_ar": "م. هيثم صالح",
+    "first_name_en": "Haitham",
+    "last_name_en": "Saleh",
     "title": "Eng. ",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_018",
-    "instructor_name_original": "Hamdy Attallah",
     "instructor_name_clean": "Hamdy Attallah",
-    "first_name_en": "Hamdy",
-    "last_name_en": "Attallah",
     "full_name_ar": "د. حمدي متولي خميس عطاالله",
     "system_name_ar": "د. حمدى عطا الله",
+    "first_name_en": "Hamdy",
+    "last_name_en": "Attallah",
     "title": "Dr.",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_019",
-    "instructor_name_original": "Heba Elsegaey",
     "instructor_name_clean": "Heba Elsegaey",
-    "first_name_en": "Heba",
-    "last_name_en": "Elsegaey",
     "full_name_ar": "د. هبة السجيعي",
     "system_name_ar": "د. هبه السجاعي",
+    "first_name_en": "Heba",
+    "last_name_en": "Elsegaey",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_020",
-    "instructor_name_original": "Hussein Elmasry",
     "instructor_name_clean": "Hussein Elmasry",
-    "first_name_en": "Hussein",
-    "last_name_en": "Elmasry",
     "full_name_ar": "د. حسين عبدالله سليمان حسين المصري",
     "system_name_ar": "د. حسين المصرى ",
+    "first_name_en": "Hussein",
+    "last_name_en": "Elmasry",
     "title": "Dr.",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_021",
-    "instructor_name_original": "Iptihal Yousry",
     "instructor_name_clean": "Iptihal Yousry",
-    "first_name_en": "Iptihal",
-    "last_name_en": "Yousry",
     "full_name_ar": "م. ابتهال يسري ابراهيم قطب مغنين",
     "system_name_ar": "م. ابتهال يسرى",
+    "first_name_en": "Iptihal",
+    "last_name_en": "Yousry",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_022",
-    "instructor_name_original": "Mahmoud Elsahfae",
     "instructor_name_clean": "Mahmoud Elsahfae",
-    "first_name_en": "Mahmoud",
-    "last_name_en": "Elsahfae",
     "full_name_ar": "م. محمود مصطفي الشافعي جنح",
     "system_name_ar": "م. محمود الشافعى",
+    "first_name_en": "Mahmoud",
+    "last_name_en": "Elsahfae",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_023",
-    "instructor_name_original": "Malak Abdelfattah",
     "instructor_name_clean": "Malak Abdelfattah",
-    "first_name_en": "Malak",
-    "last_name_en": "Abdelfattah",
     "full_name_ar": "م. ملك عبدالفتاح عبدالعزيز صوله",
     "system_name_ar": "م. ملك عبدالفتاح",
+    "first_name_en": "Malak",
+    "last_name_en": "Abdelfattah",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_024",
-    "instructor_name_original": "Mohamed Ezzeldeen",
     "instructor_name_clean": "Mohamed Ezzeldeen",
-    "first_name_en": "Mohamed",
-    "last_name_en": "Ezzeldeen",
     "full_name_ar": "م. محمد اشرف عبدالواحد عزالدين",
     "system_name_ar": "م . محمد عز الدين",
+    "first_name_en": "Mohamed",
+    "last_name_en": "Ezzeldeen",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_025",
-    "instructor_name_original": "Mohamed Rabie",
     "instructor_name_clean": "Mohamed Rabie",
-    "first_name_en": "Mohamed",
-    "last_name_en": "Rabie",
     "full_name_ar": "د. محمد ربيع حسن طلبه محمد",
     "system_name_ar": "د. محمد ربيع ",
+    "first_name_en": "Mohamed",
+    "last_name_en": "Rabie",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_026",
-    "instructor_name_original": "Mohamed Salah",
     "instructor_name_clean": "Mohamed Salah",
-    "first_name_en": "Mohamed",
-    "last_name_en": "Salah",
     "full_name_ar": "م. محمد صلاح سعد سيد درويش",
     "system_name_ar": "م. محمد صلاح",
+    "first_name_en": "Mohamed",
+    "last_name_en": "Salah",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_027",
-    "instructor_name_original": "Mohamed Tony",
     "instructor_name_clean": "Mohamed Tony",
-    "first_name_en": "Mohamed",
-    "last_name_en": "Tony",
     "full_name_ar": "م. محمد احمد توني عبد اللطيف",
     "system_name_ar": "م. محمد توني",
+    "first_name_en": "Mohamed",
+    "last_name_en": "Tony",
     "title": "Eng. ",
-    "status": "Not Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Not Active"
   },
   {
     "instructor_id": "INS_028",
-    "instructor_name_original": "Mohamed Youssef",
     "instructor_name_clean": "Mohamed Youssef",
-    "first_name_en": "Mohamed",
-    "last_name_en": "Youssef",
     "full_name_ar": "م. محمد محمود لبيب يوسف",
     "system_name_ar": "م. محمد محمود لبيب يوسف",
+    "first_name_en": "Mohamed",
+    "last_name_en": "Youssef",
     "title": "Eng. ",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_029",
-    "instructor_name_original": "Moustafa Hassan",
     "instructor_name_clean": "Moustafa Hassan",
-    "first_name_en": "Moustafa",
-    "last_name_en": "Hassan",
     "full_name_ar": "د. مصطفي حسن  مصطفي عبدالجواد",
     "system_name_ar": "د. مصطفى حسن ",
+    "first_name_en": "Moustafa",
+    "last_name_en": "Hassan",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_030",
-    "instructor_name_original": "Nader Gamal",
     "instructor_name_clean": "Nader Gamal",
-    "first_name_en": "Nader",
-    "last_name_en": "Gamal",
     "full_name_ar": "م. نادر جمال محمود طه مشاحيت",
     "system_name_ar": "م.نادر جمال",
+    "first_name_en": "Nader",
+    "last_name_en": "Gamal",
     "title": "Eng. ",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_031",
-    "instructor_name_original": "Osama Mobarez",
     "instructor_name_clean": "Osama Mobarez",
-    "first_name_en": "Osama",
-    "last_name_en": "Mobarez",
     "full_name_ar": "د. أسامة محمد مهدي مبارز",
     "system_name_ar": "د. اسامه مبارز",
+    "first_name_en": "Osama",
+    "last_name_en": "Mobarez",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_032",
-    "instructor_name_original": "Ragaa Nasr",
     "instructor_name_clean": "Ragaa Nasr",
-    "first_name_en": "Ragaa",
-    "last_name_en": "Nasr",
     "full_name_ar": "د. رجاء نصر فرغلي احمد",
     "system_name_ar": "د. رجاء نصر ",
+    "first_name_en": "Ragaa",
+    "last_name_en": "Nasr",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_033",
-    "instructor_name_original": "Ragab Khamis",
     "instructor_name_clean": "Ragab Khamis",
-    "first_name_en": "Ragab",
-    "last_name_en": "Khamis",
     "full_name_ar": "د. رجب خميس جمعة محمود",
     "system_name_ar": "د. رجب خميس",
+    "first_name_en": "Ragab",
+    "last_name_en": "Khamis",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_034",
-    "instructor_name_original": "Rahma Khaled",
     "instructor_name_clean": "Rahma Khaled",
-    "first_name_en": "Rahma",
-    "last_name_en": "Khaled",
     "full_name_ar": "م. رحمة خالد عبدالمرضي عبدالباسط",
     "system_name_ar": "د. رحمة خالد ",
+    "first_name_en": "Rahma",
+    "last_name_en": "Khaled",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_035",
-    "instructor_name_original": "Rawda Essam",
     "instructor_name_clean": "Rawda Essam",
-    "first_name_en": "Rawda",
-    "last_name_en": "Essam",
     "full_name_ar": "م. روضة عصام عبدالمنعم ابو الحديد",
     "system_name_ar": "م. روضه عصام",
+    "first_name_en": "Rawda",
+    "last_name_en": "Essam",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_036",
-    "instructor_name_original": "Safa Mousa",
     "instructor_name_clean": "Safa Mousa",
-    "first_name_en": "Safa",
-    "last_name_en": "Mousa",
     "full_name_ar": "د. صفاء صابر موسي",
     "system_name_ar": "د. صفاء موسى",
+    "first_name_en": "Safa",
+    "last_name_en": "Mousa",
     "title": "Dr.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_037",
-    "instructor_name_original": "Sara Samir",
     "instructor_name_clean": "Sara Samir",
-    "first_name_en": "Sara",
-    "last_name_en": "Samir",
     "full_name_ar": "م. سارة سمير عبدالسميع سيداحمد",
     "system_name_ar": "د. سارة سمير ",
+    "first_name_en": "Sara",
+    "last_name_en": "Samir",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_038",
-    "instructor_name_original": "Shahd Abdelfattah",
     "instructor_name_clean": "Shahd Abdelfattah",
-    "first_name_en": "Shahd",
-    "last_name_en": "Abdelfattah",
     "full_name_ar": "م. شهد عبدالفتاح عبدالعزيز صوله",
     "system_name_ar": "م. شهد صوله",
+    "first_name_en": "Shahd",
+    "last_name_en": "Abdelfattah",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_039",
-    "instructor_name_original": "Shahd Essam",
     "instructor_name_clean": "Shahd Essam",
-    "first_name_en": "Shahd",
-    "last_name_en": "Essam",
     "full_name_ar": "م. شهد عصام عبدالله محمود",
     "system_name_ar": "م. شهد عصام",
+    "first_name_en": "Shahd",
+    "last_name_en": "Essam",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_040",
-    "instructor_name_original": "Shahd Moataz",
     "instructor_name_clean": "Shahd Moataz",
-    "first_name_en": "Shahd",
-    "last_name_en": "Moataz",
     "full_name_ar": "م. شهد معتز احمد نبيل",
     "system_name_ar": "م. شهد معتز",
+    "first_name_en": "Shahd",
+    "last_name_en": "Moataz",
     "title": "Eng.",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   },
   {
     "instructor_id": "INS_041",
-    "instructor_name_original": "Yasmeen Elfeky",
     "instructor_name_clean": "Yasmeen Elfeky",
-    "first_name_en": "Yasmeen",
-    "last_name_en": "Elfeky",
     "full_name_ar": "م. ياسمين سمير الفقي",
     "system_name_ar": "م. ياسمين الفقي",
+    "first_name_en": "Yasmeen",
+    "last_name_en": "Elfeky",
     "title": "Eng. ",
-    "status": "Active",
-    "source_file": "SAS Instructors/SAS Instructors_Contact List.xlsx"
+    "status": "Active"
   }
 ]
