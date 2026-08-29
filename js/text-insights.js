@@ -14,7 +14,7 @@ const STOPWORDS = new Set([
   'في', 'من', 'على', 'إلى', 'عن', 'هذا', 'هذه', 'التي', 'الذي', 'كان', 'كانت', 'ما',
 ]);
 
-const JUNK = new Set(['no', '0', 'ok']);
+const JUNK = new Set(['no', '0', 'ok', 'good']);
 
 function hasArabic(s) {
   return /[\u0600-\u06FF]/.test(s);
@@ -37,10 +37,8 @@ function isValidComment(text) {
   if (!text || !String(text).trim()) return false;
   const t = String(text).trim().toLowerCase();
   if (JUNK.has(t)) return false;
-  if (t.length < 4 && !hasArabic(t)) return false;
-  const tokens = t.split(/[\s\-–—]+/).filter(Boolean);
-  if (tokens.length > 0 && tokens.every((tok) => JUNK.has(tok))) return false;
-  if (/^[\d\s\-–—no]+$/i.test(t) && !hasArabic(t)) return false;
+  const letters = t.match(/\p{L}/gu) || [];
+  if (letters.length < 4) return false;
   return true;
 }
 
@@ -53,7 +51,14 @@ export function filterValidComments(rows) {
 }
 
 export function computeWordFrequencies(rows, { topN = 20 } = {}) {
-  const comments = filterValidComments(rows);
+  const seen = new Set();
+  const distinct = rows.filter((r) => {
+    const id = r.feedback_id;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+  const comments = filterValidComments(distinct);
   const unigrams = new Map();
   const bigrams = new Map();
   let arabicCount = 0;
@@ -77,11 +82,51 @@ export function computeWordFrequencies(rows, { topN = 20 } = {}) {
     .map(([word, count]) => ({ word, count }));
 
   return {
-    totalWithComment: rows.filter((r) => r.student_comment && String(r.student_comment).trim()).length,
+    totalWithComment: distinct.filter((r) => r.student_comment && String(r.student_comment).trim()).length,
     afterJunkFilter: comments.length,
     arabicPct: comments.length ? Math.round((arabicCount / comments.length) * 100) : 0,
     unigrams: sortTop(unigrams),
     bigrams: sortTop(bigrams),
+  };
+}
+
+export const THEME_DICTIONARY = {
+  'Teaching Quality': ['instructor', 'trainer', 'lecturer', 'teaching', 'explain', 'explanation', 'knowledgeable', 'professional', 'supportive'],
+  'Course Content': ['course', 'content', 'topic', 'curriculum', 'module'],
+  'Hands-on Practice': ['practical', 'practice', 'exercise', 'exercises', 'hands-on', 'project', 'lab'],
+  Pace: ['pace', 'fast', 'slow', 'rushed'],
+  'Time / Duration': ['time', 'duration', 'hour', 'hours', 'longer', 'shorter'],
+  Materials: ['material', 'materials', 'slides', 'manual', 'document', 'resources'],
+  'Technical Issues': ['technical', 'issue', 'problem', 'access', 'login', 'system', 'internet', 'drive', 'online', 'connection'],
+};
+
+export function computeThemes(rows) {
+  const seen = new Set();
+  const comments = filterValidComments(rows.filter((r) => {
+    if (seen.has(r.feedback_id)) return false;
+    seen.add(r.feedback_id);
+    return true;
+  }));
+  const themes = Object.entries(THEME_DICTIONARY).map(([theme, keywords]) => ({ theme, keywords, count: 0 }));
+  let classified = 0;
+  for (const row of comments) {
+    const tokens = tokenize(String(row.student_comment));
+    const normalized = tokens.join(' ');
+    let matched = false;
+    for (const item of themes) {
+      if (item.keywords.some((keyword) => keyword.includes(' ') ? normalized.includes(keyword) : tokens.includes(keyword))) {
+        item.count += 1;
+        matched = true;
+      }
+    }
+    if (matched) classified += 1;
+  }
+  return {
+    themes,
+    total: comments.length,
+    classified,
+    unclassified: comments.length - classified,
+    coveragePct: comments.length ? Math.round((classified / comments.length) * 100) : 0,
   };
 }
 

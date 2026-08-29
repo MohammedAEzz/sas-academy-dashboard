@@ -1,154 +1,123 @@
 import { fmt } from '../metrics.js';
-import { renderChartCard, renderKpiGrid } from '../components.js';
-import { renderForecastChart, colorFor } from '../charts.js';
+import { renderAnswerBand, renderSectionIntro } from '../components.js';
+import { renderForecastChart } from '../charts.js';
 
 let capacityState = { hoursPerInstructor: 30, horizon: '6_month', metric: 'teaching_hours' };
+
+const metricLabels = { teaching_hours: 'Teaching hours', sessions: 'Sessions', groups: 'Groups' };
 
 export function renderForecast(app, { data }) {
   const forecast = data.forecast;
   const baselines = forecast.capacity_baselines || {};
-  const activeCount = data.instructors.filter((i) => i.status === 'Active').length;
+  const activeCount = data.instructors.filter((instructor) => instructor.status === 'Active').length;
+
+  const computeCapacity = () => {
+    const hoursSeries = forecast.series.teaching_hours.forecasts[capacityState.horizon];
+    const months = hoursSeries.point.length;
+    const demand = hoursSeries.point.reduce((sum, value) => sum + value, 0);
+    const available = activeCount * capacityState.hoursPerInstructor * months;
+    const required = demand / (capacityState.hoursPerInstructor * months);
+    const gap = demand - available;
+    const crossCheck = Number(baselines.avg_group_starts_per_month || 0)
+      * Number(baselines.avg_sessions_per_group || 0)
+      * Number(baselines.avg_hours_per_session || 0) * months;
+    return { months, demand, available, required, gap, crossCheck };
+  };
+
+  const capacity = computeCapacity();
+  const gapLabel = capacity.gap > 0 ? `${fmt(capacity.gap, 'hours')} shortfall` : `${fmt(Math.abs(capacity.gap), 'hours')} surplus`;
 
   app.innerHTML = `
-    <div class="page-header">
-      <h2>Forecast &amp; Capacity</h2>
-      <p>Scenario planning — separate from historical achievement metrics</p>
+    ${renderAnswerBand({
+      eyebrow: 'Forecast and capacity',
+      title: `${fmt(capacity.demand, 'hours')} of expected demand requires ${fmt(capacity.required, 'number')} instructor equivalents`,
+      summary: `Under the explicit assumption of ${fmt(capacityState.hoursPerInstructor, 'int')} available teaching hours per active instructor per month, the ${capacity.months}-month scenario shows a ${gapLabel}. This is planning evidence, not observed availability.`,
+      metrics: [
+        { label: 'Expected demand', value: fmt(capacity.demand, 'hours'), sub: `${capacity.months}-month teaching-hours forecast` },
+        { label: 'Required equivalents', value: fmt(capacity.required, 'number'), sub: 'Assumption-based' },
+        { label: 'Assumed capacity', value: fmt(capacity.available, 'hours'), sub: `${activeCount} active instructors` },
+        { label: 'Gap', value: gapLabel, sub: 'Scenario result' },
+      ],
+    })}
+
+    <div class="note-box warning-box"><strong>Forecast caveat:</strong> ${forecast.limitations}</div>
+
+    ${renderSectionIntro('1 · Decision path', 'PAST → EXPECTED DEMAND → AVAILABLE CAPACITY → GAP', 'The teaching-hours forecast is the demand source; group starts are a cross-check only.')}
+    <div class="flow-ribbon">
+      <div class="flow-step"><span>Past</span><strong>${fmt(forecast.observation_count, 'int')} months</strong><p>HIGH-confidence, non-planned series from Mar 2024</p></div>
+      <div class="flow-step"><span>Expected demand</span><strong id="flow-demand">${fmt(capacity.demand, 'hours')}</strong><p>Teaching-hours forecast directly</p></div>
+      <div class="flow-step"><span>Available capacity</span><strong id="flow-capacity">${fmt(capacity.available, 'hours')}</strong><p id="flow-capacity-note">${activeCount} active × ${capacityState.hoursPerInstructor}h × ${capacity.months} months</p></div>
+      <div class="flow-step"><span>Gap</span><strong id="flow-gap">${gapLabel}</strong><p>Scenario assumption, not observed data</p></div>
     </div>
 
-    <div class="note-box warning-box">
-      <strong>Forecast caveat:</strong> ${forecast.limitations}
+    ${renderSectionIntro('2 · Supporting evidence', 'Historical fit and expected range', 'The shaded interval is model output, not observed delivery.')}
+    <div class="story-grid">
+      <section class="evidence-panel story-primary">
+        <div class="panel-header"><div><h3>Actual, fitted, and forecast</h3><p>${forecast.method}</p></div><div class="rank-controls" style="margin:0"><label>Metric <select id="fc-metric"><option value="teaching_hours">Teaching hours</option><option value="sessions">Sessions</option><option value="groups">Groups</option></select></label><label>Horizon <select id="fc-horizon"><option value="3_month">3 months</option><option value="6_month">6 months</option><option value="12_month">12 months</option></select></label></div></div>
+        <div class="chart-container tall" id="forecast-chart"></div>
+        <div class="metric-strip" id="forecast-summary" style="margin:16px 0 0"></div>
+      </section>
+      <aside class="insight-panel story-support">
+        <div class="panel-kicker">Scenario assumptions</div>
+        <h3>Capacity is user-controlled</h3>
+        <p>No instructor availability, contracted-hours, leave, or utilisation data exists.</p>
+        <div class="filter-field" style="margin-top:20px"><label for="capacity-hours">Available hours per instructor / month</label><input type="number" class="filter-input" id="capacity-hours" min="1" max="200" value="${capacityState.hoursPerInstructor}"></div>
+        <ul class="insight-list"><li><span>Active roster</span><strong>${fmt(activeCount, 'int')}</strong></li><li><span>Horizon</span><strong id="scenario-horizon">${capacity.months} months</strong></li><li><span>Required equivalents</span><strong id="scenario-required">${fmt(capacity.required, 'number')}</strong></li></ul>
+      </aside>
     </div>
 
-    <div class="forecast-narrative" id="narrative-steps">
-      <div class="narrative-step">
-        <div class="step-num">Step 1</div>
-        <h4>History</h4>
-        <p>${forecast.observation_count} monthly observations from Mar 2024 (HIGH confidence, non-planned)</p>
-      </div>
-      <div class="narrative-step">
-        <div class="step-num">Step 2</div>
-        <h4>Forecast</h4>
-        <p id="narr-step-forecast">Seasonal model projection over selected horizon</p>
-      </div>
-      <div class="narrative-step">
-        <div class="step-num">Step 3</div>
-        <h4>Required Capacity</h4>
-        <p id="narr-step-capacity">Derived from forecast teaching-hours demand</p>
-      </div>
-      <div class="narrative-step">
-        <div class="step-num">Step 4</div>
-        <h4>Gap</h4>
-        <p id="narr-step-gap">Assumption-based shortfall or surplus</p>
-      </div>
-    </div>
-
-    <div class="forecast-section">
-      <h3 style="margin:0 0 16px">Forecast Model</h3>
-      <p style="margin:0 0 16px;color:var(--text-secondary);font-size:13px">Method: ${forecast.method}</p>
-      <div class="rank-controls">
-        <label>Metric
-          <select id="fc-metric" class="filter-input" style="height:32px">
-            <option value="teaching_hours">Teaching Hours</option>
-            <option value="sessions">Sessions</option>
-            <option value="groups">Groups</option>
-          </select>
-        </label>
-        <label>Horizon
-          <select id="fc-horizon" class="filter-input" style="height:32px">
-            <option value="3_month">3 months</option>
-            <option value="6_month" selected>6 months</option>
-            <option value="12_month">12 months</option>
-          </select>
-        </label>
-      </div>
-      ${renderChartCard('fc-chart', 'Fitted vs Actual & Forecast', 'Shaded band = confidence range (not observed data)', 12)}
-      <div id="fc-summary"></div>
-    </div>
-
-    <div class="forecast-section">
-      <h3 style="margin:0 0 8px">Capacity Scenario</h3>
-      <div class="note-box">Assumptions only — no instructor availability or contracted-hours data exists. All capacity figures are computed from inputs you control.</div>
-      <div class="capacity-controls">
-        <div class="filter-field">
-          <label for="cap-hours">Assumed available hours per instructor per month</label>
-          <input type="number" class="filter-input" id="cap-hours" value="${capacityState.hoursPerInstructor}" min="1" max="200">
-        </div>
-        <div class="filter-field">
-          <label for="cap-horizon">Forecast horizon for capacity</label>
-          <select class="filter-input" id="cap-horizon">
-            <option value="3_month">3 months</option>
-            <option value="6_month" selected>6 months</option>
-            <option value="12_month">12 months</option>
-          </select>
-        </div>
-      </div>
-      <div id="capacity-results" class="capacity-result"></div>
+    ${renderSectionIntro('3 · Diagnostic detail', 'Capacity reconciliation', 'Demand and its group-start cross-check remain visibly distinct.')}
+    <div class="metric-strip" id="capacity-reconciliation">
+      <div class="metric-strip-item"><span>Forecast demand</span><strong>${fmt(capacity.demand, 'hours')}</strong><small>Teaching-hours series</small></div>
+      <div class="metric-strip-item"><span>Cross-check</span><strong>${fmt(capacity.crossCheck, 'hours')}</strong><small>Starts/mo × sessions/group × hours/session</small></div>
+      <div class="metric-strip-item"><span>Group starts / month</span><strong>${fmt(baselines.avg_group_starts_per_month, 'number')}</strong><small>Historical baseline</small></div>
+      <div class="metric-strip-item"><span>Scenario gap</span><strong>${gapLabel}</strong><small>User-entered capacity assumption</small></div>
     </div>
   `;
 
-  const updateForecastChart = () => {
-    const metric = capacityState.metric;
-    const horizon = capacityState.horizon;
-    const series = forecast.series[metric];
-    const fc = series.forecasts[horizon];
-    renderForecastChart(document.getElementById('fc-chart'), {
+  const metricSelect = app.querySelector('#fc-metric');
+  const horizonSelect = app.querySelector('#fc-horizon');
+  metricSelect.value = capacityState.metric;
+  horizonSelect.value = capacityState.horizon;
+
+  const update = () => {
+    const series = forecast.series[capacityState.metric];
+    const selectedForecast = series.forecasts[capacityState.horizon];
+    renderForecastChart(document.getElementById('forecast-chart'), {
       periods: series.periods,
       actual: series.actual,
       fitted: series.fitted,
-      forecastPeriods: fc.periods,
-      forecast: fc.point,
-      lower: fc.lower,
-      upper: fc.upper,
+      forecastPeriods: selectedForecast.periods,
+      forecast: selectedForecast.point,
+      lower: selectedForecast.lower,
+      upper: selectedForecast.upper,
     });
-    const totalFc = fc.point.reduce((s, v) => s + v, 0);
-    document.getElementById('fc-summary').innerHTML = renderKpiGrid([
-      { label: 'Forecast Total', value: fmt(totalFc, 'number'), sub: `Sum over ${fc.periods.length} periods` },
-      { label: 'Range Low', value: fmt(fc.lower.reduce((s, v) => s + v, 0), 'number') },
-      { label: 'Range High', value: fmt(fc.upper.reduce((s, v) => s + v, 0), 'number') },
-    ]);
-    updateCapacity(totalFc, fc.periods.length);
+    const total = selectedForecast.point.reduce((sum, value) => sum + value, 0);
+    const low = selectedForecast.lower.reduce((sum, value) => sum + value, 0);
+    const high = selectedForecast.upper.reduce((sum, value) => sum + value, 0);
+    document.getElementById('forecast-summary').innerHTML = `
+      <div class="metric-strip-item"><span>${metricLabels[capacityState.metric]} forecast</span><strong>${capacityState.metric === 'teaching_hours' ? fmt(total, 'hours') : fmt(total, 'number')}</strong><small>${selectedForecast.periods.length} periods</small></div>
+      <div class="metric-strip-item"><span>Range low</span><strong>${fmt(low, 'number')}</strong><small>Model interval total</small></div>
+      <div class="metric-strip-item"><span>Range high</span><strong>${fmt(high, 'number')}</strong><small>Model interval total</small></div>
+      <div class="metric-strip-item"><span>Observed months</span><strong>${fmt(forecast.observation_count, 'int')}</strong><small>Seasonality remains under-identified</small></div>`;
+
+    const current = computeCapacity();
+    const currentGap = current.gap > 0 ? `${fmt(current.gap, 'hours')} shortfall` : `${fmt(Math.abs(current.gap), 'hours')} surplus`;
+    document.getElementById('flow-demand').textContent = fmt(current.demand, 'hours');
+    document.getElementById('flow-capacity').textContent = fmt(current.available, 'hours');
+    document.getElementById('flow-capacity-note').textContent = `${activeCount} active × ${capacityState.hoursPerInstructor}h × ${current.months} months`;
+    document.getElementById('flow-gap').textContent = currentGap;
+    document.getElementById('scenario-horizon').textContent = `${current.months} months`;
+    document.getElementById('scenario-required').textContent = fmt(current.required, 'number');
+    document.getElementById('capacity-reconciliation').innerHTML = `
+      <div class="metric-strip-item"><span>Forecast demand</span><strong>${fmt(current.demand, 'hours')}</strong><small>Teaching-hours series</small></div>
+      <div class="metric-strip-item"><span>Cross-check</span><strong>${fmt(current.crossCheck, 'hours')}</strong><small>Starts/mo × sessions/group × hours/session</small></div>
+      <div class="metric-strip-item"><span>Required equivalents</span><strong>${fmt(current.required, 'number')}</strong><small>At ${capacityState.hoursPerInstructor}h per month</small></div>
+      <div class="metric-strip-item"><span>Scenario gap</span><strong>${currentGap}</strong><small>User-entered assumption</small></div>`;
   };
 
-  const updateCapacity = (forecastHoursOverride, monthsOverride) => {
-    const horizon = app.querySelector('#cap-horizon')?.value || capacityState.horizon;
-    const hoursPerInst = Number(app.querySelector('#cap-hours')?.value) || capacityState.hoursPerInstructor;
-    capacityState.hoursPerInstructor = hoursPerInst;
-    capacityState.horizon = horizon;
-
-    const hoursFc = forecast.series.teaching_hours.forecasts[horizon];
-    const months = monthsOverride || hoursFc.point.length;
-    const forecastHours = forecastHoursOverride ?? hoursFc.point.reduce((s, v) => s + v, 0);
-    const avgGroups = baselines.avg_group_starts_per_month || 0;
-    const avgSessPerGroup = baselines.avg_sessions_per_group || 0;
-    const avgHrsPerSess = baselines.avg_hours_per_session || 0;
-    const crossCheck = avgGroups * avgSessPerGroup * avgHrsPerSess * months;
-    const availablePerMonth = hoursPerInst * activeCount;
-    const totalAvailable = availablePerMonth * months;
-    const requiredEquiv = forecastHours / (hoursPerInst * months) || 0;
-    const gap = forecastHours - totalAvailable;
-
-    document.getElementById('narr-step-forecast').textContent = `${fmt(forecastHours, 'hours')} teaching hours over ${months} months`;
-    document.getElementById('narr-step-capacity').textContent = `${fmt(requiredEquiv, 'number')} instructor equivalents at ${hoursPerInst}h/mo`;
-    document.getElementById('narr-step-gap').textContent = gap > 0
-      ? `${fmt(gap, 'hours')} shortfall (assumption)`
-      : `${fmt(Math.abs(gap), 'hours')} surplus (assumption)`;
-
-    document.getElementById('capacity-results').innerHTML = `
-      ${renderKpiGrid([
-        { label: 'Forecast Hours Required', value: fmt(forecastHours, 'hours'), sub: `From forecast teaching-hours series · ${months} months` },
-        { label: 'Cross-check Hours', value: fmt(crossCheck, 'hours'), sub: 'Group starts/mo × sessions/group × hours/session' },
-        { label: 'Group Starts / month', value: fmt(avgGroups, 'number'), sub: 'Historical baseline' },
-        { label: 'Assumed Available', value: fmt(totalAvailable, 'hours'), sub: `${activeCount} active × ${hoursPerInst}h × ${months} mo` },
-        { label: 'Required Equivalents', value: fmt(requiredEquiv, 'number'), sub: 'Assumption-based' },
-        { label: 'Capacity Gap', value: fmt(gap, 'hours'), sub: gap > 0 ? 'Shortfall (assumption)' : 'Surplus (assumption)' },
-      ])}
-    `;
-  };
-
-  app.querySelector('#fc-metric')?.addEventListener('change', (e) => { capacityState.metric = e.target.value; updateForecastChart(); });
-  app.querySelector('#fc-horizon')?.addEventListener('change', (e) => { capacityState.horizon = e.target.value; updateForecastChart(); });
-  app.querySelector('#cap-hours')?.addEventListener('input', () => updateCapacity());
-  app.querySelector('#cap-horizon')?.addEventListener('change', () => updateCapacity());
-
-  updateForecastChart();
+  metricSelect.addEventListener('change', (event) => { capacityState.metric = event.target.value; update(); });
+  horizonSelect.addEventListener('change', (event) => { capacityState.horizon = event.target.value; update(); });
+  app.querySelector('#capacity-hours')?.addEventListener('input', (event) => { capacityState.hoursPerInstructor = Number(event.target.value) || 30; update(); });
+  update();
 }

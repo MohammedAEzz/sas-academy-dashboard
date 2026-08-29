@@ -83,7 +83,7 @@ function surface() {
 function baseOption() {
   return {
     textStyle: { fontFamily: 'Inter, Segoe UI, system-ui, sans-serif', fontSize: 12, color: inkSecondary() },
-    grid: { left: 52, right: 20, top: 48, bottom: 36, containLabel: false },
+    grid: { left: 20, right: 20, top: 48, bottom: 24, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross', crossStyle: { color: inkMuted() } },
@@ -191,8 +191,12 @@ export function renderBarChart(el, { categories, series, horizontal = false, sta
   const longest = horizontal
     ? categories.reduce((m, c) => Math.max(m, String(c ?? '').length), 0)
     : 0;
-  const leftGutter = horizontal ? Math.min(220, Math.max(100, longest * 7 + 20)) : 52;
-  const legend = showLegend ?? (series.length > 1 || (series.length <= 4 && series.length > 0));
+  const availableWidth = el?.clientWidth || 800;
+  const labelLimit = availableWidth < 500 ? 15 : 42;
+  const gutterCap = availableWidth < 500 ? 132 : Math.min(340, Math.round(availableWidth * 0.44));
+  const visibleLongest = Math.min(longest, labelLimit);
+  const leftGutter = horizontal ? Math.min(gutterCap, Math.max(88, visibleLongest * 7 + 20)) : 20;
+  const legend = showLegend ?? series.length > 1;
   const axis = horizontal
     ? {
         xAxis: { type: 'value', ...axisStyle() },
@@ -200,7 +204,16 @@ export function renderBarChart(el, { categories, series, horizontal = false, sta
           type: 'category',
           data: categories,
           ...axisStyle(),
-          axisLabel: { ...axisStyle().axisLabel, width: leftGutter - 16, overflow: 'truncate', ellipsis: '…' },
+          axisLabel: {
+            ...axisStyle().axisLabel,
+            width: leftGutter - 16,
+            overflow: 'truncate',
+            ellipsis: '…',
+            formatter: (value) => {
+              const label = String(value ?? '');
+              return label.length > labelLimit ? `${label.slice(0, labelLimit - 1)}…` : label;
+            },
+          },
         },
       }
     : {
@@ -209,7 +222,7 @@ export function renderBarChart(el, { categories, series, horizontal = false, sta
       };
   chart.setOption({
     ...baseOption(),
-    grid: { left: leftGutter, right: 20, top: 48, bottom: 36 },
+    grid: { left: leftGutter, right: series.length === 1 ? 56 : 28, top: legend ? 48 : 20, bottom: 28 },
     tooltip: { ...baseOption().tooltip, trigger: 'axis', axisPointer: { type: horizontal ? 'shadow' : 'shadow' } },
     legend: legend ? { top: 4, right: 8, textStyle: { color: inkSecondary() } } : undefined,
     ...axis,
@@ -291,18 +304,18 @@ export function renderForecastChart(el, { periods, actual, fitted, forecastPerio
   const upperData = [...periods.map(() => null), ...upper];
   chart.setOption({
     ...baseOption(),
-    legend: { top: 4, textStyle: { color: inkSecondary() } },
+    legend: { top: 4, textStyle: { color: inkSecondary() }, data: ['Actual', 'Fitted', 'Forecast'] },
     xAxis: { type: 'category', data: allCats, ...axisStyle(), axisLabel: { rotate: 35, color: inkMuted(), fontSize: 10 } },
     yAxis: { type: 'value', ...axisStyle() },
     series: [
       { ...lineSeriesItem({ name: 'Actual', data: actualData, color: comp.color }) },
       { ...lineSeriesItem({ name: 'Fitted', data: fittedData, color: inkMuted(), dashed: true }) },
       { ...lineSeriesItem({ name: 'Forecast', data: fcData, color: plan.color, dashed: true }) },
-      { name: 'Lower', type: 'line', data: lowerData, lineStyle: { opacity: 0 }, showSymbol: false, stack: 'band', areaStyle: { opacity: 0 } },
+      { name: 'Lower bound', type: 'line', data: lowerData, lineStyle: { opacity: 0 }, showSymbol: false, stack: 'band', areaStyle: { opacity: 0 }, tooltip: { show: false } },
       {
-        name: 'Upper', type: 'line', data: upperData,
+        name: 'Forecast range', type: 'line', data: upperData.map((value, index) => (value == null || lowerData[index] == null ? null : value - lowerData[index])),
         lineStyle: { opacity: 0 }, showSymbol: false, stack: 'band',
-        areaStyle: { color: hexToRgba(plan.color, 0.12) },
+        areaStyle: { color: hexToRgba(plan.color, 0.16) }, tooltip: { show: false },
       },
     ],
   });
@@ -315,7 +328,7 @@ export function renderDivergingBar(el, { categories, values, max = 5 }) {
   const mid = max / 2;
   chart.setOption({
     ...baseOption(),
-    grid: { left: 120, right: 40, top: 24, bottom: 24 },
+    grid: { left: 190, right: 40, top: 24, bottom: 24 },
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     xAxis: {
       type: 'value', min: 1, max,

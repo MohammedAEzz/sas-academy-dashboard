@@ -20,6 +20,7 @@ function renderPage(parts) {
   disposeAllCharts();
   const app = document.getElementById('app');
   const page = parts[0] || 'overview';
+  app.dataset.route = parts.join('/') || 'overview';
 
   switch (page) {
     case 'overview':
@@ -65,7 +66,9 @@ async function init() {
 
     // Mobile filter toggle
     document.getElementById('filter-toggle-mobile')?.addEventListener('click', () => {
-      document.getElementById('filter-toolbar')?.classList.toggle('open');
+      const toolbar = document.getElementById('filter-toolbar');
+      const isOpen = toolbar?.classList.toggle('open');
+      document.getElementById('filter-toggle-mobile')?.setAttribute('aria-expanded', String(Boolean(isOpen)));
     });
 
     await ready;

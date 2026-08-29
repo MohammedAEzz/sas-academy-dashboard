@@ -41,33 +41,33 @@ export function renderFilterBar(container, idx) {
     placeholder: 'All groups', wide: true,
     onChange: (v) => setFilter('groupCode', v),
   }));
-  toolbar.appendChild(createSearchableSelect({
-    id: 'f-instructor', label: 'Instructor', options: instructors, value: f.instructorId,
-    placeholder: 'All instructors', wide: true,
-    onChange: (v) => setFilter('instructorId', v),
-  }));
-  toolbar.appendChild(createSearchableSelect({
-    id: 'f-course', label: 'Course', options: courses, value: f.courseId,
-    placeholder: 'All courses', wide: true,
-    onChange: (v) => setFilter('courseId', v),
-  }));
-
   const moreToggle = document.createElement('button');
   moreToggle.type = 'button';
   moreToggle.className = 'filter-more-toggle';
   moreToggle.id = 'toggle-more-filters';
-  moreToggle.textContent = 'More filters ▾';
+  const activeCount = [f.dateFrom || f.dateTo, f.activityType, f.groupCode, f.instructorId, f.courseId, f.language, f.status].filter(Boolean).length;
+  moreToggle.textContent = `Filters${activeCount ? ` (${activeCount})` : ''}`;
   toolbar.appendChild(moreToggle);
 
   const actions = document.createElement('div');
   actions.className = 'filter-actions';
-  actions.innerHTML = '<button type="button" class="btn btn-ghost" id="clear-filters">Clear all</button>';
+  actions.innerHTML = `<button type="button" class="btn btn-ghost reset-filters" id="clear-filters" ${activeCount ? '' : 'disabled'}>Reset</button>`;
   toolbar.appendChild(actions);
 
   const more = document.createElement('div');
   more.className = 'filter-more';
   more.id = 'filter-more';
-  more.innerHTML = `
+  more.appendChild(createSearchableSelect({
+    id: 'f-instructor', label: 'Instructor', options: instructors, value: f.instructorId,
+    placeholder: 'All instructors', wide: true,
+    onChange: (v) => setFilter('instructorId', v),
+  }));
+  more.appendChild(createSearchableSelect({
+    id: 'f-course', label: 'Course', options: courses, value: f.courseId,
+    placeholder: 'All courses', wide: true,
+    onChange: (v) => setFilter('courseId', v),
+  }));
+  more.insertAdjacentHTML('beforeend', `
     <div class="filter-field">
       <label for="f-language">Language</label>
       <select class="filter-input" id="f-language">
@@ -84,7 +84,7 @@ export function renderFilterBar(container, idx) {
         <option value="UNKNOWN" ${f.status === 'UNKNOWN' ? 'selected' : ''}>Unknown</option>
       </select>
     </div>
-  `;
+  `);
   toolbar.appendChild(more);
 
   const chipsWrap = container.querySelector('#filter-chips') || document.createElement('div');
@@ -101,6 +101,7 @@ export function renderFilterBar(container, idx) {
   toolbar.querySelector('#clear-filters')?.addEventListener('click', clearFilters);
   toolbar.querySelector('#toggle-more-filters')?.addEventListener('click', () => {
     more.classList.toggle('open');
+    moreToggle.classList.toggle('active', more.classList.contains('open'));
   });
 
   renderChips(chipsWrap, idx);
@@ -168,6 +169,21 @@ export function renderKpiGrid(items) {
   `).join('')}</div>`;
 }
 
+export function renderAnswerBand({ eyebrow = 'Executive answer', title, summary = '', metrics = [] }) {
+  return `<section class="answer-band" aria-label="Page answer">
+    <div class="answer-copy">
+      <div class="answer-eyebrow">${eyebrow}</div>
+      <h2>${title}</h2>
+      ${summary ? `<p>${summary}</p>` : ''}
+    </div>
+    ${metrics.length ? `<div class="answer-metrics">${metrics.map((m) => `<div class="answer-metric"><span>${m.label}</span><strong>${m.value}</strong>${m.sub ? `<small>${m.sub}</small>` : ''}</div>`).join('')}</div>` : ''}
+  </section>`;
+}
+
+export function renderSectionIntro(kicker, title, note = '') {
+  return `<div class="section-intro"><div><span>${kicker}</span><h3>${title}</h3></div>${note ? `<p>${note}</p>` : ''}</div>`;
+}
+
 export function renderPipelineStrip(items) {
   return renderKpiRow(items, { secondary: true });
 }
@@ -213,7 +229,12 @@ export function renderTableCard({ title, toolbar = '', tableHtml, footer = '' })
 }
 
 export function renderComments(comments, page = 1, pageSize = 20, { keyword = '', substantiveOnly = true } = {}) {
-  let withText = comments.filter((c) => c.student_comment && String(c.student_comment).trim());
+  const seen = new Set();
+  let withText = comments.filter((c) => {
+    if (!c.student_comment || !String(c.student_comment).trim() || seen.has(c.feedback_id)) return false;
+    seen.add(c.feedback_id);
+    return true;
+  });
   const totalAll = withText.length;
   const totalSubstantive = withText.filter((c) => isSubstantiveComment(c.student_comment)).length;
 
