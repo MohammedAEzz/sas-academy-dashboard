@@ -52,6 +52,22 @@ function renderPage(parts) {
 
 async function init() {
   try {
+    // Theme
+    const savedTheme = localStorage.getItem('sas-theme') || 'light';
+    document.documentElement.dataset.theme = savedTheme;
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('sas-theme', next);
+      const parts = (window.location.hash || '#/overview').replace(/^#/, '').split('/').filter(Boolean);
+      renderPage(parts);
+    });
+
+    // Mobile filter toggle
+    document.getElementById('filter-toggle-mobile')?.addEventListener('click', () => {
+      document.getElementById('filter-toolbar')?.classList.toggle('open');
+    });
+
     await ready;
     idx = buildIndexes(data);
     const filterBar = document.getElementById('filter-bar');

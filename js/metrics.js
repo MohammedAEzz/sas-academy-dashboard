@@ -193,12 +193,12 @@ export function satisfactionTrend(feedback) {
     .map(([month, v]) => ({ month, avg: v.sum / v.count, count: v.count }));
 }
 
-export function ratingDistribution(feedback, field = 'overall_satisfaction') {
+export function ratingDistribution(feedback, field = 'overall_rating') {
   const distinct = dedupeFeedback(feedback);
   const buckets = new Map();
   for (const r of distinct) {
     const v = r[field];
-    if (v == null) continue;
+    if (v == null || Number.isNaN(Number(v))) continue;
     const key = Math.round(Number(v));
     buckets.set(key, (buckets.get(key) || 0) + 1);
   }
@@ -218,9 +218,9 @@ export function perQuestionBreakdown(feedback) {
   const distinct = dedupeFeedback(feedback);
   const fields = [
     ['E-Learning', 'rating_elearning_score'],
-    ['Guided', 'rating_guided_score'],
+    ['Guided Activities', 'rating_guided_score'],
     ['Project', 'rating_project_score'],
-    ['Knowledge', 'rating_knowledge_score'],
+    ['Skill Knowledge', 'rating_knowledge_score'],
     ['Leadership', 'rating_leadership_score'],
     ['Soft Skills', 'rating_soft_skills_score'],
   ];

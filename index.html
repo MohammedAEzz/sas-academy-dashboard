@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SAS Academy Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -24,9 +27,17 @@
         <a href="#/programs" data-route="programs">Programs</a>
         <a href="#/forecast" data-route="forecast">Forecast &amp; Capacity</a>
       </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
+      </div>
     </header>
 
-    <section class="filter-bar" id="filter-bar" aria-label="Global filters"></section>
+    <section class="filter-bar" id="filter-bar" aria-label="Global filters">
+      <div class="filter-bar-inner">
+        <button class="filter-toggle-mobile" id="filter-toggle-mobile" type="button">Filters ▾</button>
+        <div class="filter-toolbar" id="filter-toolbar"></div>
+      </div>
+    </section>
 
     <main class="app-main" id="app">
       <div class="loading-state" id="loading-state">

@@ -3,6 +3,7 @@ import { inDateRange } from './format.js';
 const defaultState = {
   dateFrom: '',
   dateTo: '',
+  datePreset: 'all',
   activityType: '',
   groupCode: '',
   courseId: '',
@@ -10,6 +11,34 @@ const defaultState = {
   language: '',
   status: '',
 };
+
+export function applyDatePreset(preset) {
+  const today = new Date();
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  if (preset === 'last6') {
+    const from = new Date(today);
+    from.setMonth(from.getMonth() - 6);
+    state.dateFrom = fmt(from);
+    state.dateTo = fmt(today);
+    state.datePreset = 'last6';
+  } else if (preset === 'thisyear') {
+    state.dateFrom = `${today.getFullYear()}-01-01`;
+    state.dateTo = fmt(today);
+    state.datePreset = 'thisyear';
+  } else {
+    state.dateFrom = '';
+    state.dateTo = '';
+    state.datePreset = 'all';
+  }
+  notify();
+}
+
+export function setDateRange(from, to) {
+  state.dateFrom = from;
+  state.dateTo = to;
+  state.datePreset = '';
+  notify();
+}
 
 let state = { ...defaultState };
 const listeners = new Set();
@@ -25,11 +54,6 @@ export function setFilter(key, value) {
 
 export function clearFilters() {
   state = { ...defaultState };
-  notify();
-}
-
-export function removeFilter(key) {
-  state[key] = '';
   notify();
 }
 
@@ -67,12 +91,20 @@ export function applyFilters(records, dataset = 'sessions') {
   });
 }
 
+const ACTIVITY_COLORS = {
+  INTERNAL: '#eb6834',
+  EXTERNAL: '#2a78d6',
+  DIPLOMA: '#1baf7a',
+  EVENT: '#eda100',
+};
+
 export function activeFilterChips(idx) {
   const f = getFilters();
   const chips = [];
+  if (f.dateFrom || f.dateTo) {
+    chips.push({ key: 'dateFrom', label: `Dates: ${f.dateFrom || '…'} – ${f.dateTo || '…'}`, color: null });
+  }
   const labels = {
-    dateFrom: 'From',
-    dateTo: 'To',
     activityType: 'Type',
     groupCode: 'Group',
     courseId: 'Course',
@@ -83,9 +115,25 @@ export function activeFilterChips(idx) {
   for (const [key, label] of Object.entries(labels)) {
     if (!f[key]) continue;
     let display = f[key];
+    let color = null;
     if (key === 'courseId') display = idx?.courseName(f[key]) || f[key];
     if (key === 'instructorId') display = idx?.instructorName(f[key]) || f[key];
-    chips.push({ key, label: `${label}: ${display}` });
+    if (key === 'activityType') {
+      display = f[key];
+      color = ACTIVITY_COLORS[f[key]] || null;
+    }
+    chips.push({ key, label: `${label}: ${display}`, color });
   }
   return chips;
+}
+
+export function removeFilter(key) {
+  if (key === 'dateFrom') {
+    state.dateFrom = '';
+    state.dateTo = '';
+    state.datePreset = 'all';
+  } else {
+    state[key] = '';
+  }
+  notify();
 }

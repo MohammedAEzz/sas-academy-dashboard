@@ -2,89 +2,118 @@ import {
   getFilters, setFilter, clearFilters, removeFilter, activeFilterChips, onFilterChange,
 } from './filters.js';
 import { activityTypeLabel } from './format.js';
+import { createSearchableSelect } from './searchable-dropdown.js';
+import { createDateRangePicker } from './date-range-picker.js';
+import { activityColor } from './charts.js';
+import { isSubstantiveComment } from './text-insights.js';
 
 export function renderFilterBar(container, idx) {
   const f = getFilters();
-  const groups = idx.groupCodes;
-  const courses = [...idx.courseMap.values()].sort((a, b) => a.course_name_clean.localeCompare(b.course_name_clean));
-  const instructors = [...idx.instructorMap.values()].sort((a, b) => a.instructor_name_clean.localeCompare(b.instructor_name_clean));
+  const groups = idx.groupCodes.map((g) => ({ value: g, label: g }));
+  const courses = [...idx.courseMap.values()]
+    .sort((a, b) => a.course_name_clean.localeCompare(b.course_name_clean))
+    .map((c) => ({ value: c.course_id, label: c.course_name_clean }));
+  const instructors = [...idx.instructorMap.values()]
+    .sort((a, b) => a.instructor_name_clean.localeCompare(b.instructor_name_clean))
+    .map((i) => ({ value: i.instructor_id, label: i.instructor_name_clean }));
 
-  container.innerHTML = `
-    <div class="filter-row">
-      <div class="filter-group"><label>Date from</label><input type="date" id="f-dateFrom" value="${f.dateFrom}"></div>
-      <div class="filter-group"><label>Date to</label><input type="date" id="f-dateTo" value="${f.dateTo}"></div>
-      <div class="filter-group"><label>Activity type</label>
-        <select id="f-activityType">
-          <option value="">All</option>
-          ${idx.activityTypes.map((t) => `<option value="${t}" ${f.activityType === t ? 'selected' : ''}>${activityTypeLabel(t)}</option>`).join('')}
-        </select>
-      </div>
-      <div class="filter-group"><label>Group</label>
-        <select id="f-groupCode"><option value="">All</option>
-          ${groups.map((g) => `<option value="${g}" ${f.groupCode === g ? 'selected' : ''}>${g}</option>`).join('')}
-        </select>
-      </div>
-      <button class="btn btn-link" id="toggle-more-filters">More filters ▾</button>
-      <div class="filter-actions">
-        <button class="btn" id="clear-filters">Clear filters</button>
-      </div>
-    </div>
-    <div class="filter-more" id="filter-more">
-      <div class="filter-group"><label>Course</label>
-        <select id="f-courseId"><option value="">All</option>
-          ${courses.map((c) => `<option value="${c.course_id}" ${f.courseId === c.course_id ? 'selected' : ''}>${c.course_name_clean}</option>`).join('')}
-        </select>
-      </div>
-      <div class="filter-group"><label>Instructor</label>
-        <select id="f-instructorId"><option value="">All</option>
-          ${instructors.map((i) => `<option value="${i.instructor_id}" ${f.instructorId === i.instructor_id ? 'selected' : ''}>${i.instructor_name_clean}</option>`).join('')}
-        </select>
-      </div>
-      <div class="filter-group"><label>Language</label>
-        <select id="f-language"><option value="">All</option>
-          ${idx.languages.map((l) => `<option value="${l}" ${f.language === l ? 'selected' : ''}>${l}</option>`).join('')}
-        </select>
-      </div>
-      <div class="filter-group"><label>Status</label>
-        <select id="f-status">
-          <option value="">All</option>
-          <option value="COMPLETED" ${f.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
-          <option value="PLANNED" ${f.status === 'PLANNED' ? 'selected' : ''}>Planned</option>
-          <option value="UNKNOWN" ${f.status === 'UNKNOWN' ? 'selected' : ''}>Unknown</option>
-        </select>
-      </div>
-    </div>
-    <div class="filter-chips" id="filter-chips"></div>
+  const toolbar = container.querySelector('#filter-toolbar') || container;
+  toolbar.innerHTML = '';
+  toolbar.className = 'filter-toolbar';
+
+  toolbar.appendChild(createDateRangePicker());
+
+  // Activity type
+  const actField = document.createElement('div');
+  actField.className = 'filter-field';
+  actField.innerHTML = `
+    <label for="f-activityType">Activity type</label>
+    <select class="filter-input" id="f-activityType">
+      <option value="">All types</option>
+      ${idx.activityTypes.map((t) => `<option value="${t}" ${f.activityType === t ? 'selected' : ''}>${activityTypeLabel(t)}</option>`).join('')}
+    </select>
   `;
+  toolbar.appendChild(actField);
 
-  const bind = (id, key) => {
-    const el = container.querySelector(id);
-    el?.addEventListener('change', () => setFilter(key, el.value));
-  };
-  bind('#f-dateFrom', 'dateFrom');
-  bind('#f-dateTo', 'dateTo');
-  bind('#f-activityType', 'activityType');
-  bind('#f-groupCode', 'groupCode');
-  bind('#f-courseId', 'courseId');
-  bind('#f-instructorId', 'instructorId');
-  bind('#f-language', 'language');
-  bind('#f-status', 'status');
+  // Searchable dropdowns
+  toolbar.appendChild(createSearchableSelect({
+    id: 'f-group', label: 'Group', options: groups, value: f.groupCode,
+    placeholder: 'All groups', wide: true,
+    onChange: (v) => setFilter('groupCode', v),
+  }));
+  toolbar.appendChild(createSearchableSelect({
+    id: 'f-instructor', label: 'Instructor', options: instructors, value: f.instructorId,
+    placeholder: 'All instructors', wide: true,
+    onChange: (v) => setFilter('instructorId', v),
+  }));
+  toolbar.appendChild(createSearchableSelect({
+    id: 'f-course', label: 'Course', options: courses, value: f.courseId,
+    placeholder: 'All courses', wide: true,
+    onChange: (v) => setFilter('courseId', v),
+  }));
 
-  container.querySelector('#clear-filters')?.addEventListener('click', clearFilters);
-  container.querySelector('#toggle-more-filters')?.addEventListener('click', () => {
-    container.querySelector('#filter-more')?.classList.toggle('open');
+  const moreToggle = document.createElement('button');
+  moreToggle.type = 'button';
+  moreToggle.className = 'filter-more-toggle';
+  moreToggle.id = 'toggle-more-filters';
+  moreToggle.textContent = 'More filters ▾';
+  toolbar.appendChild(moreToggle);
+
+  const actions = document.createElement('div');
+  actions.className = 'filter-actions';
+  actions.innerHTML = '<button type="button" class="btn btn-ghost" id="clear-filters">Clear all</button>';
+  toolbar.appendChild(actions);
+
+  const more = document.createElement('div');
+  more.className = 'filter-more';
+  more.id = 'filter-more';
+  more.innerHTML = `
+    <div class="filter-field">
+      <label for="f-language">Language</label>
+      <select class="filter-input" id="f-language">
+        <option value="">All languages</option>
+        ${idx.languages.map((l) => `<option value="${l}" ${f.language === l ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    <div class="filter-field">
+      <label for="f-status">Status</label>
+      <select class="filter-input" id="f-status">
+        <option value="">All statuses</option>
+        <option value="COMPLETED" ${f.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
+        <option value="PLANNED" ${f.status === 'PLANNED' ? 'selected' : ''}>Planned</option>
+        <option value="UNKNOWN" ${f.status === 'UNKNOWN' ? 'selected' : ''}>Unknown</option>
+      </select>
+    </div>
+  `;
+  toolbar.appendChild(more);
+
+  const chipsWrap = container.querySelector('#filter-chips') || document.createElement('div');
+  chipsWrap.className = 'filter-chips';
+  chipsWrap.id = 'filter-chips';
+  if (!chipsWrap.parentElement) {
+    container.querySelector('.filter-bar-inner')?.appendChild(chipsWrap);
+  }
+
+  // Bind events
+  toolbar.querySelector('#f-activityType')?.addEventListener('change', (e) => setFilter('activityType', e.target.value));
+  more.querySelector('#f-language')?.addEventListener('change', (e) => setFilter('language', e.target.value));
+  more.querySelector('#f-status')?.addEventListener('change', (e) => setFilter('status', e.target.value));
+  toolbar.querySelector('#clear-filters')?.addEventListener('click', clearFilters);
+  toolbar.querySelector('#toggle-more-filters')?.addEventListener('click', () => {
+    more.classList.toggle('open');
   });
 
-  renderChips(container, idx);
+  renderChips(chipsWrap, idx);
 }
 
-function renderChips(container, idx) {
-  const chipsEl = container.querySelector('#filter-chips');
+function renderChips(chipsEl, idx) {
   if (!chipsEl) return;
   const chips = activeFilterChips(idx);
-  chipsEl.innerHTML = chips.map((c) => `
-    <span class="chip">${c.label}<button type="button" data-key="${c.key}" aria-label="Remove filter">×</button></span>
-  `).join('');
+  if (!chips.length) { chipsEl.innerHTML = ''; return; }
+  chipsEl.innerHTML = chips.map((c) => {
+    const swatch = c.color ? `<span class="chip-swatch" style="background:${c.color}"></span>` : '';
+    return `<span class="chip">${swatch}${c.label}<button type="button" data-key="${c.key}" aria-label="Remove filter">✕</button></span>`;
+  }).join('');
   chipsEl.querySelectorAll('button').forEach((btn) => {
     btn.addEventListener('click', () => removeFilter(btn.dataset.key));
   });
@@ -95,6 +124,38 @@ export function bindFilterUpdates(container, idx, rerender) {
     renderFilterBar(container, idx);
     rerender();
   });
+}
+
+export function renderEmptyFilters(onClear) {
+  return `<div class="empty-state">
+    <h3>No results match these filters</h3>
+    <p>Try adjusting your filter criteria or clearing all filters to see data.</p>
+    <button type="button" class="btn btn-primary" id="empty-clear-filters">Clear all filters</button>
+  </div>`;
+}
+
+export function bindEmptyClear(app, onClear) {
+  app.querySelector('#empty-clear-filters')?.addEventListener('click', onClear);
+}
+
+export function renderKpiRow(items, { secondary = false } = {}) {
+  if (secondary) {
+    return `<div class="pipeline-strip" role="region" aria-label="Pipeline and upcoming">
+      <span class="pipeline-label">Pipeline / Upcoming</span>
+      <div class="pipeline-items">
+        ${items.map((k) => `<div class="pipeline-item"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('')}
+      </div>
+    </div>`;
+  }
+  return `<div class="kpi-row" role="region" aria-label="Key metrics">
+    ${items.map((k) => `
+      <div class="kpi-card">
+        <div class="label">${k.label}</div>
+        <div class="value">${k.value}</div>
+        ${k.sub ? `<div class="sub">${k.sub}</div>` : ''}
+      </div>
+    `).join('')}
+  </div>`;
 }
 
 export function renderKpiGrid(items) {
@@ -108,16 +169,19 @@ export function renderKpiGrid(items) {
 }
 
 export function renderPipelineStrip(items) {
-  return `<div class="pipeline-strip"><h3>Pipeline / Upcoming</h3><div class="pipeline-grid">
-    ${items.map((k) => `<div class="pipeline-item"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('')}
-  </div></div>`;
+  return renderKpiRow(items, { secondary: true });
 }
 
-export function renderChartCard(id, title, note = '', full = false) {
-  return `<div class="chart-card${full ? ' full' : ''}">
+export function renderChartCard(id, title, note = '', span = 6) {
+  const spanClass = span === 12 ? 'full' : span === 4 ? 'span-4' : span === 8 ? 'span-8' : '';
+  return `<div class="chart-card ${spanClass}">
     <h3>${title}</h3>${note ? `<div class="chart-note">${note}</div>` : ''}
     <div class="chart-container" id="${id}"></div>
   </div>`;
+}
+
+export function renderCardEmpty(message = 'No data available for the current filters') {
+  return `<div class="card-empty">${message}</div>`;
 }
 
 export function paginate(rows, page, pageSize) {
@@ -128,27 +192,91 @@ export function paginate(rows, page, pageSize) {
   return { rows: rows.slice(start, start + pageSize), page: p, pages, total };
 }
 
-export function renderTable({ columns, rows, sortKey, sortDir, onSort, rowClass, onRowClick, id = 'data-table' }) {
+export function renderTable({ columns, rows, sortKey, sortDir, rowClass, onRowClick, id = 'data-table' }) {
   const th = columns.map((c) => `
-    <th class="${c.num ? 'num' : ''}" data-key="${c.key}">${c.label}${sortKey === c.key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}</th>
+    <th class="${c.num ? 'num' : ''}" data-key="${c.key}">${c.label}${sortKey === c.key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</th>
   `).join('');
   const tr = rows.map((r, i) => `
     <tr class="${rowClass ? rowClass(r) : ''}${onRowClick ? ' clickable' : ''}" data-idx="${i}">
       ${columns.map((c) => `<td class="${c.num ? 'num' : ''}">${c.render ? c.render(r) : r[c.key]}</td>`).join('')}
     </tr>
   `).join('');
-  return `<table class="data-table" id="${id}"><thead><tr>${th}</tr></thead><tbody>${tr || '<tr><td colspan="' + columns.length + '">No results</td></tr>'}</tbody></table>`;
+  return `<table class="data-table" id="${id}"><thead><tr>${th}</tr></thead><tbody>${tr || `<tr><td colspan="${columns.length}" class="card-empty">No results</td></tr>`}</tbody></table>`;
 }
 
-export function renderComments(comments, page = 1, pageSize = 20) {
-  const withText = comments.filter((c) => c.student_comment && String(c.student_comment).trim());
+export function renderTableCard({ title, toolbar = '', tableHtml, footer = '' }) {
+  return `<div class="table-card">
+    ${title ? `<div class="table-toolbar"><h3 style="margin:0;font-size:14px;font-weight:600">${title}</h3>${toolbar}</div>` : toolbar ? `<div class="table-toolbar">${toolbar}</div>` : ''}
+    <div class="table-wrap">${tableHtml}</div>
+    ${footer ? `<div class="table-footer">${footer}</div>` : ''}
+  </div>`;
+}
+
+export function renderComments(comments, page = 1, pageSize = 20, { keyword = '', substantiveOnly = true } = {}) {
+  let withText = comments.filter((c) => c.student_comment && String(c.student_comment).trim());
+  const totalAll = withText.length;
+  const totalSubstantive = withText.filter((c) => isSubstantiveComment(c.student_comment)).length;
+
+  if (substantiveOnly) {
+    withText = withText.filter((c) => isSubstantiveComment(c.student_comment));
+  }
+  if (keyword) {
+    const kw = keyword.toLowerCase();
+    withText = withText.filter((c) => String(c.student_comment).toLowerCase().includes(kw));
+  }
   const { rows, pages, total } = paginate(withText, page, pageSize);
+  const toggleLabel = substantiveOnly
+    ? `Showing ${totalSubstantive.toLocaleString()} substantive comments · <button type="button" class="btn btn-ghost btn-sm" id="comments-show-all">Show all ${totalAll.toLocaleString()}</button>`
+    : `Showing all ${totalAll.toLocaleString()} comments · <button type="button" class="btn btn-ghost btn-sm" id="comments-show-substantive">Show ${totalSubstantive.toLocaleString()} substantive only</button>`;
+
   return {
-    html: `<ul class="comments-list">${rows.map((c) => `
-      <li><div class="meta">${c.feedback_date || ''} · ${c.group_code_clean || ''} · ${c.instructor_name_clean || ''}</div>${escapeHtml(c.student_comment)}</li>
-    `).join('') || '<li>No comments</li>'}</ul>`,
-    page, pages, total,
+    html: `<p class="comments-toggle">${toggleLabel}</p>
+    <ul class="comments-list">${rows.map((c) => `
+      <li>
+        <div class="meta">
+          <span>${c.feedback_date || '—'}</span>
+          <span>${c.group_code_clean || '—'}</span>
+          <span>${c.instructor_name_clean || '—'}</span>
+        </div>
+        ${escapeHtml(c.student_comment)}
+      </li>
+    `).join('') || '<li class="card-empty">No comments match</li>'}</ul>`,
+    page, pages, total, totalAll, totalSubstantive, substantiveOnly,
   };
+}
+
+export function renderWordFrequencyPanel(freq, { activeKeyword = '', onKeyword } = {}) {
+  const tags = (items, type) => items.map(({ word, count }) => `
+    <button type="button" class="word-tag${activeKeyword === word ? ' active' : ''}" data-word="${escapeHtml(word)}" data-type="${type}">
+      ${escapeHtml(word)} <span class="count">${count}</span>
+    </button>
+  `).join('');
+
+  return `<div class="word-freq-panel">
+    <h3>Most frequent words in comments</h3>
+    <p class="disclaimer">Word frequency analysis only — not sentiment, not AI, not themes.
+      ${freq.totalWithComment.toLocaleString()} distinct responses carry a comment;
+      ${freq.afterJunkFilter.toLocaleString()} remain after filtering junk;
+      ${freq.arabicPct}% contain Arabic script.</p>
+    <p class="section-label" style="margin-top:16px">Top words</p>
+    <div class="word-cloud" id="word-unigrams">${tags(freq.unigrams, 'uni') || '<span class="card-empty">No words</span>'}</div>
+    <p class="section-label" style="margin-top:16px">Top phrases</p>
+    <div class="word-cloud" id="word-bigrams">${tags(freq.bigrams, 'bi') || '<span class="card-empty">No phrases</span>'}</div>
+  </div>`;
+}
+
+export function bindCommentsToggle(container, onToggle) {
+  container?.querySelector('#comments-show-all')?.addEventListener('click', () => onToggle(true));
+  container?.querySelector('#comments-show-substantive')?.addEventListener('click', () => onToggle(false));
+}
+
+export function bindWordFrequency(panel, callback) {
+  panel?.querySelectorAll('.word-tag').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const word = btn.dataset.word;
+      callback(word === panel.dataset.active ? '' : word);
+    });
+  });
 }
 
 export function escapeHtml(s) {
@@ -160,7 +288,6 @@ export function escapeHtml(s) {
 }
 
 export function renderDataQuality(overview, idx) {
-  const unmapped = idx.unmappedFeedback.length;
   const unmappedDistinct = new Set(idx.unmappedFeedback.map((f) => f.feedback_id)).size;
   return `
     <span>Data as of ${overview.as_of_date}</span>
@@ -170,3 +297,5 @@ export function renderDataQuality(overview, idx) {
     <span>Student counts: ${overview.student_count_coverage?.activities_with_students}/${overview.student_count_coverage?.total_activities} activities</span>
   `;
 }
+
+export { activityColor };
