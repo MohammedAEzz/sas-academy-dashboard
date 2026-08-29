@@ -72,6 +72,13 @@ export function buildIndexes(data) {
   const languages = [...new Set(sessions.map((s) => s.language).filter(Boolean))].sort();
   const activityTypes = [...new Set(activities.map((a) => a.activity_type).filter(Boolean))].sort();
 
+  const sessionNameByCourseId = new Map();
+  for (const s of sessions) {
+    if (s.course_id && s.course_name_clean && !sessionNameByCourseId.has(s.course_id)) {
+      sessionNameByCourseId.set(s.course_id, s.course_name_clean);
+    }
+  }
+
   return {
     instructorMap,
     courseMap,
@@ -93,7 +100,9 @@ export function buildIndexes(data) {
       return instructorMap.get(id)?.instructor_name_clean || id;
     },
     courseName(id) {
-      return courseMap.get(id)?.course_name_clean || id;
+      return courseMap.get(id)?.course_name_clean
+        || sessionNameByCourseId.get(id)
+        || 'Unknown Course';
     },
   };
 }

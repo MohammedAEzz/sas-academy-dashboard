@@ -3,14 +3,14 @@
     "diploma_id": "DIP_001",
     "diploma_type": "DBA",
     "session_count": 37,
-    "date_min": "Eid Al-Adha holiday",
-    "date_max": "Wednesday 27 March 2024 – 9 PM (3 Hours)"
+    "date_min": "2024-03-17",
+    "date_max": "2024-08-15"
   },
   {
     "diploma_id": "DIP_002",
     "diploma_type": "MBA",
     "session_count": 34,
-    "date_min": "Eid Al-Fitr Holiday",
-    "date_max": "Tuesday 30 April 2024 – 7 PM (3 Hours)"
+    "date_min": "2024-03-16",
+    "date_max": "2024-07-16"
   }
 ]

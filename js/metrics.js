@@ -140,8 +140,12 @@ export function activityTypeBreakdown(sessions) {
 export function topCourses(sessions, courseMap, n = 8) {
   const hist = sessions.filter(isCompletedSession);
   const map = new Map();
+  const sessionNames = new Map();
   for (const s of hist) {
     if (!s.course_id) continue;
+    if (s.course_name_clean && !sessionNames.has(s.course_id)) {
+      sessionNames.set(s.course_id, s.course_name_clean);
+    }
     if (!map.has(s.course_id)) map.set(s.course_id, { hours: 0, sessions: 0 });
     const b = map.get(s.course_id);
     b.hours += s.duration_hours || 0;
@@ -150,7 +154,7 @@ export function topCourses(sessions, courseMap, n = 8) {
   return [...map.entries()]
     .map(([id, v]) => ({
       course_id: id,
-      name: courseMap.get(id)?.course_name_clean || id,
+      name: courseMap.get(id)?.course_name_clean || sessionNames.get(id) || 'Unknown Course',
       ...v,
     }))
     .sort((a, b) => b.hours - a.hours)
@@ -225,7 +229,9 @@ export function perQuestionBreakdown(feedback) {
     ['Soft Skills', 'rating_soft_skills_score'],
   ];
   return fields.map(([label, field]) => {
-    const valid = distinct.filter((r) => r[field] != null);
+    const valid = distinct.filter(
+      (r) => r[field] != null && !Number.isNaN(Number(r[field])) && Number(r[field]) >= 1,
+    );
     const sum = valid.reduce((s, r) => s + Number(r[field]), 0);
     return { label, avg: valid.length ? sum / valid.length : null, count: valid.length };
   });
