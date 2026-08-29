@@ -7,9 +7,9 @@
   "completed_teaching_hours": 7020.0,
   "unknown_status_teaching_hours": 0.0,
   "planned_teaching_hours": 1068.0,
-  "total_activities": 989,
+  "total_activities": 441,
   "total_instructors": 41,
-  "total_courses": 32,
+  "total_courses": 13,
   "total_feedback": 3742,
   "total_feedback_expanded_rows": 3827,
   "feedback_counting_rules": {
@@ -55,7 +55,14 @@
   "comments_note": "Student comments exported with email/9+ digit redaction applied. Residual self-identifying text may remain in free-text fields.",
   "comments_non_empty_count": 2297,
   "student_count_coverage": {
-    "activities_with_students": 171,
-    "total_activities": 989
-  }
+    "activities_with_students": 107,
+    "total_activities": 441
+  },
+  "legacy_sessions_provenance": "Session counts, teaching hours, delivery trends and forecast use legacy dated sessions (source: legacy_sessions). Dimensions, groups, instructors, feedback and events use clean CSV tables.",
+  "completed_sessions_source": "legacy_sessions",
+  "completed_teaching_hours_source": "legacy_sessions",
+  "planned_sessions_source": "legacy_sessions",
+  "unknown_status_sessions_source": "legacy_sessions",
+  "planned_teaching_hours_source": "legacy_sessions",
+  "unknown_status_teaching_hours_source": "legacy_sessions"
 }

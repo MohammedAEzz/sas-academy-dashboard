@@ -1,15 +1,15 @@
 [
   {
     "event_id": "EVT_001",
-    "event_name": "AArU Data Science and AI Bootcamp",
+    "event_name": "SAS & AArU Re/start Bootcamp",
     "event_type": "BOOTCAMP",
-    "event_date_start": "2024-11-15",
+    "event_date_start": "2024-11-08",
     "event_date_end": "2024-11-29",
     "participant_count": 67
   },
   {
     "event_id": "EVT_002",
-    "event_name": "SAS Forecasting Workshop and Hackathon for Sustainability and Data4Good",
+    "event_name": "SAS Forecasting Workshop & Hackathon for Sustainability and Data4Good",
     "event_type": "HACKATHON",
     "event_date_start": "2024-12-13",
     "event_date_end": "2024-12-14",

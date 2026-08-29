@@ -15,11 +15,11 @@ const routes = [
 ];
 
 const detailRoutes = [
-  { hash: '#/groups/DBA', name: 'group-detail' },
+  { hash: '#/groups/MBA-G1', name: 'group-detail' },
   { hash: '#/instructors/INS_001', name: 'instructor-profile' },
 ];
 
-const BAD_TEXT = /\b(undefined|NaN|null)\b/;
+const BAD_TEXT = /\b(undefined|NaN|null|nan|none|nat)\b/i;
 
 async function checkPage(page, route, screenshotName) {
   await page.evaluate((r) => { window.location.hash = r; }, route);

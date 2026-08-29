@@ -1,194 +1,80 @@
 [
   {
     "course_id": "CRS_001",
-    "course_name_clean": "Advanced Analytics",
-    "declared_hours": null,
-    "source_count": 0
-  },
-  {
-    "course_id": "CRS_002",
-    "course_name_clean": "Data Science And Machine Learning",
-    "declared_hours": null,
-    "source_count": 0
-  },
-  {
-    "course_id": "CRS_003",
     "course_name_clean": "Forecast Value-Added Analysis",
     "declared_hours": 12.0,
-    "source_count": 4
-  },
-  {
-    "course_id": "CRS_004",
-    "course_name_clean": "Forecast Value-Added Analysis & Text Analytics",
-    "declared_hours": null,
-    "source_count": 6
-  },
-  {
-    "course_id": "CRS_005",
-    "course_name_clean": "Forecasting Using Model Studio in SAS Viya",
-    "declared_hours": 12.0,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_006",
-    "course_name_clean": "Leading with Analytics",
-    "declared_hours": 6.0,
     "source_count": 9
   },
   {
+    "course_id": "CRS_002",
+    "course_name_clean": "Forecasting Using Model Studio in SAS Viya",
+    "declared_hours": 12.0,
+    "source_count": 4
+  },
+  {
+    "course_id": "CRS_003",
+    "course_name_clean": "Leading with Analytics",
+    "declared_hours": 12.0,
+    "source_count": 8
+  },
+  {
+    "course_id": "CRS_004",
+    "course_name_clean": "SAS Advanced Analytics",
+    "declared_hours": null,
+    "source_count": 50
+  },
+  {
+    "course_id": "CRS_005",
+    "course_name_clean": "SAS Data Science & Machine Learning (DBA Business Administration)",
+    "declared_hours": null,
+    "source_count": 16
+  },
+  {
+    "course_id": "CRS_006",
+    "course_name_clean": "SAS Selected Workshops",
+    "declared_hours": 12.0,
+    "source_count": 4
+  },
+  {
     "course_id": "CRS_007",
-    "course_name_clean": "Machine Learning for SAS® Viya",
+    "course_name_clean": "SAS Statistical Analytics",
+    "declared_hours": null,
+    "source_count": 40
+  },
+  {
+    "course_id": "CRS_008",
+    "course_name_clean": "SAS Visual Analytics",
+    "declared_hours": null,
+    "source_count": 73
+  },
+  {
+    "course_id": "CRS_009",
+    "course_name_clean": "Statistical Analysis E-Learning Courses: SAS Enterprise Guide 1: Querying and Reporting SAS® Enterprise Guide®: ANOVA, Regression, and Logistic Regression",
+    "declared_hours": 30.0,
+    "source_count": 20
+  },
+  {
+    "course_id": "CRS_010",
+    "course_name_clean": "Total Hours: 102 Hours",
     "declared_hours": null,
     "source_count": 1
   },
   {
-    "course_id": "CRS_008",
-    "course_name_clean": "SAS Advanced Analytics",
-    "declared_hours": null,
-    "source_count": 5
-  },
-  {
-    "course_id": "CRS_009",
-    "course_name_clean": "SAS Data Science & Machine Learning (DBA Business Administration)",
-    "declared_hours": null,
-    "source_count": 4
-  },
-  {
-    "course_id": "CRS_010",
-    "course_name_clean": "SAS Enterprise Guide 1: Querying and Reporting",
-    "declared_hours": null,
-    "source_count": 6
-  },
-  {
     "course_id": "CRS_011",
-    "course_name_clean": "SAS Selected Workshops",
-    "declared_hours": 12.0,
+    "course_name_clean": "Total Hours: 96 Hours",
+    "declared_hours": null,
     "source_count": 1
   },
   {
     "course_id": "CRS_012",
-    "course_name_clean": "SAS Skill 01",
-    "declared_hours": null,
-    "source_count": 1
+    "course_name_clean": "Visual Analytics E-Learning Courses: SAS® Visual Analytics 1 for SAS® Viya®: Basics SAS® Visual Analytics 2 for SAS® Viya®: Advanced",
+    "declared_hours": 30.0,
+    "source_count": 20
   },
   {
     "course_id": "CRS_013",
-    "course_name_clean": "SAS Skill 02",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_014",
-    "course_name_clean": "SAS Skill 03",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_015",
-    "course_name_clean": "SAS Skill 04",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_016",
-    "course_name_clean": "SAS Skill 1 - Visual Analytics",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_017",
-    "course_name_clean": "SAS Skill 2 - Statistical Analytics",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_018",
-    "course_name_clean": "SAS Skill 3 - Advanced Analytics",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_019",
-    "course_name_clean": "SAS Skill 4 - Data Science and Machine Learning",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_020",
-    "course_name_clean": "SAS Statistical Analytics",
-    "declared_hours": null,
-    "source_count": 5
-  },
-  {
-    "course_id": "CRS_021",
-    "course_name_clean": "SAS Visual Analytics",
-    "declared_hours": null,
-    "source_count": 6
-  },
-  {
-    "course_id": "CRS_022",
-    "course_name_clean": "SAS® Enterprise Guide®: ANOVA, Regression, and Logistic Regression",
-    "declared_hours": null,
-    "source_count": 6
-  },
-  {
-    "course_id": "CRS_023",
-    "course_name_clean": "SAS® Visual Analytics 1 for SAS® Viya®: Basics",
-    "declared_hours": null,
-    "source_count": 10
-  },
-  {
-    "course_id": "CRS_024",
-    "course_name_clean": "SAS® Visual Analytics 2 for SAS® Viya®: Advanced",
-    "declared_hours": null,
-    "source_count": 10
-  },
-  {
-    "course_id": "CRS_025",
-    "course_name_clean": "Selected Workshops",
-    "declared_hours": null,
-    "source_count": 2
-  },
-  {
-    "course_id": "CRS_026",
-    "course_name_clean": "Statistical Analysis",
-    "declared_hours": null,
-    "source_count": 0
-  },
-  {
-    "course_id": "CRS_027",
-    "course_name_clean": "Statistical Analysis E-Learning Courses: SAS Enterprise Guide 1: Querying and Reporting SAS® Enterprise Guide®: ANOVA, Regression, and Logistic Regression",
-    "declared_hours": 30.0,
-    "source_count": 2
-  },
-  {
-    "course_id": "CRS_028",
-    "course_name_clean": "Statistics You Need to Know for Machine Learning",
-    "declared_hours": null,
-    "source_count": 5
-  },
-  {
-    "course_id": "CRS_029",
-    "course_name_clean": "The Modeling Life Cycle for Data Scientists",
-    "declared_hours": null,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_030",
-    "course_name_clean": "Visual Analytics E-Learning Courses: SAS® Visual Analytics 1 for SAS® Viya®: Basics SAS® Visual Analytics 2 for SAS® Viya®: Advanced",
-    "declared_hours": 30.0,
-    "source_count": 2
-  },
-  {
-    "course_id": "CRS_031",
     "course_name_clean": "Visual Statistics in SAS Viya E-Learning Course: SAS® Visual Statistics in SAS® Viya®: Interactive Model Building",
     "declared_hours": 12.0,
-    "source_count": 1
-  },
-  {
-    "course_id": "CRS_032",
-    "course_name_clean": "الفصل الثاني 2023/2024 ( Intake 2 ) MBA",
-    "declared_hours": null,
-    "source_count": 1
+    "source_count": 4
   }
 ]

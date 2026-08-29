@@ -216,7 +216,8 @@
             1016.74
           ]
         }
-      }
+      },
+      "source": "legacy_sessions"
     },
     "sessions": {
       "periods": [
@@ -430,7 +431,8 @@
             198.31
           ]
         }
-      }
+      },
+      "source": "legacy_sessions"
     },
     "groups": {
       "periods": [
@@ -644,7 +646,8 @@
             63.8
           ]
         }
-      }
+      },
+      "source": "legacy_sessions"
     }
   },
   "capacity_baselines": {
@@ -653,5 +656,6 @@
     "avg_group_starts_per_month": 5.17,
     "historical_hours_per_month": 230.4
   },
-  "capacity_formula": "forecast teaching hours (direct) — cross-check: group_starts/mo × sessions/group × hours/session"
+  "capacity_formula": "forecast teaching hours (direct) — cross-check: group_starts/mo × sessions/group × hours/session",
+  "source": "legacy_sessions"
 }
