@@ -1,0 +1,3 @@
+# Local verification tooling — contains localhost references, not for production
+scripts/
+.DS_Store
