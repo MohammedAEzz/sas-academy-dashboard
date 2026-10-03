@@ -1,3 +1,10 @@
 # Local verification tooling — contains localhost references, not for production
 scripts/
+tests/
+db/
 .DS_Store
+node_modules/
+.env*
+.agents/
+.claude/
+skills-lock.json
