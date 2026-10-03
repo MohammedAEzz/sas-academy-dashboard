@@ -2,8 +2,32 @@
 
 const charts = new Map();
 
+let themeLock = null;
+let exportLayout = false;
+
 function isDark() {
+  if (themeLock === 'light') return false;
+  if (themeLock === 'dark') return true;
+  if (typeof document === 'undefined') return false;
   return document.documentElement.dataset.theme === 'dark';
+}
+
+function fs(size) {
+  return exportLayout ? size + 4 : size;
+}
+
+/** Light colours and larger type for print. Restores the previous theme afterwards. */
+export function withExportCharts(fn) {
+  const previousTheme = themeLock;
+  const previousExport = exportLayout;
+  themeLock = 'light';
+  exportLayout = true;
+  try {
+    return fn();
+  } finally {
+    themeLock = previousTheme;
+    exportLayout = previousExport;
+  }
 }
 
 export const PALETTE = {
@@ -82,14 +106,14 @@ function surface() {
 
 function baseOption() {
   return {
-    textStyle: { fontFamily: 'Inter, Segoe UI, system-ui, sans-serif', fontSize: 12, color: inkSecondary() },
+    textStyle: { fontFamily: 'Inter, Segoe UI, system-ui, sans-serif', fontSize: fs(12), color: inkSecondary() },
     grid: { left: 20, right: 20, top: 48, bottom: 24, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross', crossStyle: { color: inkMuted() } },
       backgroundColor: isDark() ? '#242423' : '#ffffff',
       borderColor: isDark() ? '#333330' : '#e5e4e0',
-      textStyle: { color: ink(), fontSize: 12 },
+      textStyle: { color: ink(), fontSize: fs(12) },
     },
   };
 }
@@ -98,7 +122,7 @@ function axisStyle() {
   return {
     axisLine: { lineStyle: { color: isDark() ? '#333330' : '#e5e4e0' } },
     axisTick: { show: false },
-    axisLabel: { color: inkMuted(), fontSize: 11 },
+    axisLabel: { color: inkMuted(), fontSize: fs(11) },
     splitLine: { lineStyle: { color: isDark() ? '#2a2a28' : '#f0efec', type: 'dashed' } },
   };
 }
@@ -124,7 +148,7 @@ function barSeriesItem(s, stacked) {
       show: true,
       position: s.horizontal ? 'right' : 'top',
       color: ink(),
-      fontSize: 11,
+      fontSize: fs(11),
       formatter: (p) => (p.value != null ? p.value : ''),
     } : undefined,
   };
@@ -138,7 +162,7 @@ function lineSeriesItem(s) {
     data: s.data,
     smooth: false,
     symbol: 'circle',
-    symbolSize: 8,
+    symbolSize: exportLayout ? 10 : 8,
     showSymbol: true,
     lineStyle: { width: 2, color: c, type: s.dashed ? 'dashed' : 'solid' },
     itemStyle: { color: c, borderWidth: 2, borderColor: surface() },
@@ -168,34 +192,39 @@ function initChart(el) {
   return chart;
 }
 
-export function renderLineChart(el, { categories, series, yName = '', showLegend = null }) {
-  const chart = initChart(el);
-  if (!chart) return null;
+export function lineChartOption({ categories, series, yName = '', showLegend = null }) {
   const legend = showLegend ?? series.length > 1;
-  chart.setOption({
+  const many = (categories || []).length > 12;
+  const option = {
     ...baseOption(),
     legend: legend ? {
-      top: 4, right: 8, textStyle: { color: inkSecondary() },
+      top: 4, right: 8, textStyle: { color: inkSecondary(), fontSize: fs(12) },
       itemWidth: 10, itemHeight: 10,
     } : undefined,
-    xAxis: { type: 'category', data: categories, ...axisStyle(), axisLabel: { ...axisStyle().axisLabel, rotate: categories.length > 12 ? 40 : 0 } },
-    yAxis: { type: 'value', name: yName, nameTextStyle: { color: inkMuted() }, ...axisStyle() },
+    xAxis: { type: 'category', data: categories, ...axisStyle(), axisLabel: { ...axisStyle().axisLabel, rotate: many ? 40 : 0 } },
+    yAxis: { type: 'value', name: yName, nameTextStyle: { color: inkMuted(), fontSize: fs(12) }, ...axisStyle() },
     series: series.map(lineSeriesItem),
-  });
+  };
+  if (exportLayout) option.grid = { left: 16, right: 28, top: 56, bottom: many ? 84 : 40, containLabel: true };
+  return option;
+}
+
+export function renderLineChart(el, spec) {
+  const chart = initChart(el);
+  if (!chart) return null;
+  chart.setOption(lineChartOption(spec));
   return chart;
 }
 
-export function renderBarChart(el, { categories, series, horizontal = false, stacked = false, showLegend = null }) {
-  const chart = initChart(el);
-  if (!chart) return null;
+export function barChartOption({ categories, series, horizontal = false, stacked = false, showLegend = null }, width = 800) {
   const longest = horizontal
     ? categories.reduce((m, c) => Math.max(m, String(c ?? '').length), 0)
     : 0;
-  const availableWidth = el?.clientWidth || 800;
-  const labelLimit = availableWidth < 500 ? 15 : 42;
-  const gutterCap = availableWidth < 500 ? 132 : Math.min(340, Math.round(availableWidth * 0.44));
+  const availableWidth = exportLayout ? 1600 : width;
+  const labelLimit = exportLayout ? 80 : (availableWidth < 500 ? 15 : 42);
+  const gutterCap = exportLayout ? 540 : (availableWidth < 500 ? 132 : Math.min(340, Math.round(availableWidth * 0.44)));
   const visibleLongest = Math.min(longest, labelLimit);
-  const leftGutter = horizontal ? Math.min(gutterCap, Math.max(88, visibleLongest * 7 + 20)) : 20;
+  const leftGutter = horizontal ? Math.min(gutterCap, Math.max(exportLayout ? 180 : 88, visibleLongest * 7 + 20)) : 20;
   const legend = showLegend ?? series.length > 1;
   const axis = horizontal
     ? {
@@ -207,9 +236,9 @@ export function renderBarChart(el, { categories, series, horizontal = false, sta
           axisLabel: {
             ...axisStyle().axisLabel,
             width: leftGutter - 16,
-            overflow: 'truncate',
+            overflow: exportLayout ? 'break' : 'truncate',
             ellipsis: '…',
-            formatter: (value) => {
+            formatter: exportLayout ? undefined : (value) => {
               const label = String(value ?? '');
               return label.length > labelLimit ? `${label.slice(0, labelLimit - 1)}…` : label;
             },
@@ -217,17 +246,28 @@ export function renderBarChart(el, { categories, series, horizontal = false, sta
         },
       }
     : {
-        xAxis: { type: 'category', data: categories, ...axisStyle() },
+        xAxis: { type: 'category', data: categories, ...axisStyle(), axisLabel: { ...axisStyle().axisLabel, rotate: exportLayout && categories.length > 8 ? 32 : 0 } },
         yAxis: { type: 'value', ...axisStyle() },
       };
-  chart.setOption({
+  return {
     ...baseOption(),
-    grid: { left: leftGutter, right: series.length === 1 ? 56 : 28, top: legend ? 48 : 20, bottom: 28 },
-    tooltip: { ...baseOption().tooltip, trigger: 'axis', axisPointer: { type: horizontal ? 'shadow' : 'shadow' } },
-    legend: legend ? { top: 4, right: 8, textStyle: { color: inkSecondary() } } : undefined,
+    grid: {
+      left: leftGutter,
+      right: series.length === 1 ? (exportLayout ? 72 : 56) : 28,
+      top: legend ? (exportLayout ? 56 : 48) : 20,
+      bottom: !horizontal && categories.length > 8 ? (exportLayout ? 80 : 28) : (exportLayout ? 36 : 28),
+    },
+    tooltip: { ...baseOption().tooltip, trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: legend ? { top: 4, right: 8, textStyle: { color: inkSecondary(), fontSize: fs(12) } } : undefined,
     ...axis,
     series: series.map((s) => barSeriesItem({ ...s, horizontal, showLabel: series.length <= 4 }, stacked)),
-  });
+  };
+}
+
+export function renderBarChart(el, spec) {
+  const chart = initChart(el);
+  if (!chart) return null;
+  chart.setOption(barChartOption(spec, el?.clientWidth || 800));
   return chart;
 }
 
@@ -259,7 +299,7 @@ export function renderDonut(el, { data, title = '' }) {
         show: true,
         color: ink(),
         formatter: '{b}\n{d}%',
-        fontSize: 11,
+        fontSize: fs(11),
       },
       labelLine: { lineStyle: { color: inkMuted() } },
       itemStyle: { borderColor: surface(), borderWidth: 2 },
@@ -285,15 +325,13 @@ export function renderHistogram(el, { bins, title = '' }) {
       data: bins.map((b) => b.count),
       itemStyle: { color: colorFor('INTERNAL'), borderRadius: [4, 4, 0, 0] },
       barWidth: '60%',
-      label: { show: true, position: 'top', color: ink(), fontSize: 11 },
+      label: { show: true, position: 'top', color: ink(), fontSize: fs(11) },
     }],
   });
   return chart;
 }
 
-export function renderForecastChart(el, { periods, actual, fitted, forecastPeriods, forecast, lower, upper }) {
-  const chart = initChart(el);
-  if (!chart) return null;
+export function forecastChartOption({ periods, actual, fitted, forecastPeriods, forecast, lower, upper }) {
   const allCats = [...periods, ...forecastPeriods];
   const comp = completedStyle();
   const plan = plannedStyle();
@@ -302,10 +340,11 @@ export function renderForecastChart(el, { periods, actual, fitted, forecastPerio
   const fcData = [...periods.map(() => null), ...forecast];
   const lowerData = [...periods.map(() => null), ...lower];
   const upperData = [...periods.map(() => null), ...upper];
-  chart.setOption({
+  return {
     ...baseOption(),
-    legend: { top: 4, textStyle: { color: inkSecondary() }, data: ['Actual', 'Fitted', 'Forecast'] },
-    xAxis: { type: 'category', data: allCats, ...axisStyle(), axisLabel: { rotate: 35, color: inkMuted(), fontSize: 10 } },
+    grid: exportLayout ? { left: 16, right: 24, top: 56, bottom: 88, containLabel: true } : baseOption().grid,
+    legend: { top: 4, textStyle: { color: inkSecondary(), fontSize: fs(12) }, data: ['Actual', 'Fitted', 'Forecast'] },
+    xAxis: { type: 'category', data: allCats, ...axisStyle(), axisLabel: { rotate: 35, color: inkMuted(), fontSize: fs(10) } },
     yAxis: { type: 'value', ...axisStyle() },
     series: [
       { ...lineSeriesItem({ name: 'Actual', data: actualData, color: comp.color }) },
@@ -318,24 +357,33 @@ export function renderForecastChart(el, { periods, actual, fitted, forecastPerio
         areaStyle: { color: hexToRgba(plan.color, 0.16) }, tooltip: { show: false },
       },
     ],
-  });
+  };
+}
+
+export function renderForecastChart(el, spec) {
+  const chart = initChart(el);
+  if (!chart) return null;
+  chart.setOption(forecastChartOption(spec));
   return chart;
 }
 
-export function renderDivergingBar(el, { categories, values, max = 5 }) {
-  const chart = initChart(el);
-  if (!chart) return null;
+export function divergingBarOption({ categories, values, max = 5 }) {
   const mid = max / 2;
-  chart.setOption({
+  return {
     ...baseOption(),
-    grid: { left: 190, right: 40, top: 24, bottom: 24 },
+    grid: { left: exportLayout ? 340 : 190, right: exportLayout ? 64 : 40, top: 24, bottom: 24 },
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     xAxis: {
       type: 'value', min: 1, max,
       ...axisStyle(),
       axisLine: { onZero: true, lineStyle: { color: inkMuted() } },
     },
-    yAxis: { type: 'category', data: categories, ...axisStyle() },
+    yAxis: {
+      type: 'category',
+      data: categories,
+      ...axisStyle(),
+      ...(exportLayout ? { axisLabel: { ...axisStyle().axisLabel, width: 310, overflow: 'break' } } : {}),
+    },
     series: [{
       type: 'bar',
       data: values.map((v) => ({
@@ -345,11 +393,31 @@ export function renderDivergingBar(el, { categories, values, max = 5 }) {
           borderRadius: [0, 4, 4, 0],
         },
       })),
-      label: { show: true, position: 'right', color: ink(), formatter: (p) => (p.value != null ? Number(p.value).toFixed(2) : '') },
-      barWidth: 16,
+      label: {
+        show: true,
+        position: 'right',
+        color: ink(),
+        ...(exportLayout ? { fontSize: fs(11) } : {}),
+        formatter: (p) => (p.value != null ? Number(p.value).toFixed(2) : ''),
+      },
+      barWidth: exportLayout ? 22 : 16,
     }],
-  });
+  };
+}
+
+export function renderDivergingBar(el, spec) {
+  const chart = initChart(el);
+  if (!chart) return null;
+  chart.setOption(divergingBarOption(spec));
   return chart;
+}
+
+export function buildChartOption(kind, spec) {
+  if (kind === 'line') return lineChartOption(spec);
+  if (kind === 'bar') return barChartOption(spec, 1600);
+  if (kind === 'forecast') return forecastChartOption(spec);
+  if (kind === 'diverging') return divergingBarOption(spec);
+  throw new Error(`Unknown chart kind: ${kind}`);
 }
 
 export function resizeCharts() {

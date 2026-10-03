@@ -11,7 +11,11 @@ import { navigate } from '../router.js';
 let activeTab = 'courses';
 let selectedCourseId = null;
 
-export function renderPrograms(app, { data, idx }) {
+export function selectedProgramCourseId() {
+  return selectedCourseId;
+}
+
+export function programPortfolio(data) {
   const sessions = filterSessions(data.sessions);
   const activities = filterActivities(data.activities);
   const feedback = filterFeedback(data.feedback);
@@ -23,7 +27,6 @@ export function renderPrograms(app, { data, idx }) {
     const learner = feedbackMetrics(feedback.filter((row) => row.course_id === course.course_id));
     return { course, metrics, groups: groups.size, instructors: instructors.size, learner, monthly: monthlySeries(courseSessions) };
   }).filter((row) => row.metrics.completedCount > 0).sort((a, b) => b.metrics.completedHours - a.metrics.completedHours);
-  if (!selectedCourseId && courseRows[0]) selectedCourseId = courseRows[0].course.course_id;
 
   const externalActivities = activities.filter((activity) => activity.activity_type === 'EXTERNAL');
   const externalCodes = [...new Set(externalActivities.map((activity) => activity.group_code).filter(Boolean))].sort();
@@ -32,6 +35,54 @@ export function renderPrograms(app, { data, idx }) {
     const metrics = sessionMetrics(sessions.filter((session) => session.group_code === code));
     return { code, activity: acts[0], metrics };
   }).sort((a, b) => b.metrics.completedCount - a.metrics.completedCount);
+  return { courseRows, externalRows };
+}
+
+export function programChartSpecs(portfolio, selectedId) {
+  const { courseRows, externalRows } = portfolio;
+  const selected = courseRows.find((row) => row.course.course_id === selectedId) || courseRows[0] || null;
+  const topCourses = courseRows.slice(0, 8).reverse();
+  const topClients = externalRows.slice(0, 10).reverse();
+  return {
+    selected,
+    hours: topCourses.length ? {
+      categories: topCourses.map((row) => row.course.course_name_clean),
+      series: [{ name: 'Hours', data: topCourses.map((row) => Math.round(row.metrics.completedHours)), color: colorFor('DIPLOMA') }],
+      horizontal: true,
+    } : null,
+    demand: selected?.monthly.length ? {
+      categories: selected.monthly.map((item) => item.month),
+      series: [{ name: 'Completed sessions', data: selected.monthly.map((item) => item.completed), color: colorFor('EXTERNAL'), area: true }],
+      showLegend: false,
+    } : null,
+    clients: topClients.length ? {
+      categories: topClients.map((row) => row.code),
+      series: [{ name: 'Sessions', data: topClients.map((row) => row.metrics.completedCount), color: colorFor('EXTERNAL') }],
+      horizontal: true,
+    } : null,
+  };
+}
+
+export function diplomaChartSpec(diplomas) {
+  if (!diplomas.length) return null;
+  return {
+    categories: diplomas.map((row) => row.diploma_type),
+    series: [{ name: 'Sessions', data: diplomas.map((row) => row.session_count), color: colorFor('DIPLOMA') }],
+  };
+}
+
+export function eventChartSpec(events) {
+  if (!events.length) return null;
+  return {
+    categories: events.map((row) => row.event_name),
+    series: [{ name: 'Participants', data: events.map((row) => row.participant_count), color: colorFor('EVENT') }],
+    horizontal: true,
+  };
+}
+
+export function renderPrograms(app, { data, idx }) {
+  const { courseRows, externalRows } = programPortfolio(data);
+  if (!selectedCourseId && courseRows[0]) selectedCourseId = courseRows[0].course.course_id;
 
   app.innerHTML = `
     <div class="page-header"><h2>Programs</h2><p>One view at a time: course demand, external group codes, diplomas, or events.</p></div>
@@ -59,10 +110,10 @@ export function renderPrograms(app, { data, idx }) {
       ${renderSectionIntro('2 · Detail', 'Course catalog', 'Select a row to update the drill-down above.')}
       ${renderTableCard({ tableHtml: `<table class="data-table table-mobile-compact"><thead><tr><th>Course</th><th class="num">Groups</th><th class="num">Sessions</th><th class="num">Hours</th><th class="num">Instructors</th><th class="num">Rating</th></tr></thead><tbody>${courseRows.map((row) => `<tr class="clickable${selectedCourseId === row.course.course_id ? ' selected' : ''}" data-course="${escapeHtml(row.course.course_id)}"><td>${escapeHtml(row.course.course_name_clean)}</td><td class="num">${fmt(row.groups, 'int')}</td><td class="num">${fmt(row.metrics.completedCount, 'int')}</td><td class="num">${fmt(row.metrics.completedHours, 'int')}</td><td class="num">${fmt(row.instructors, 'int')}</td><td class="num">${row.learner.avgSatisfaction != null ? `${fmt(row.learner.avgSatisfaction, 'rating')} <span class="table-sub">n=${fmt(row.learner.satDenom, 'int')}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` })}
     `;
-    const top = courseRows.slice(0, 8).reverse();
-    if (top.length) renderBarChart(document.getElementById('program-course-hours'), { categories: top.map((row) => row.course.course_name_clean), series: [{ name: 'Hours', data: top.map((row) => Math.round(row.metrics.completedHours)), color: colorFor('DIPLOMA') }], horizontal: true });
+    const specs = programChartSpecs({ courseRows, externalRows }, selectedCourseId);
+    if (specs.hours) renderBarChart(document.getElementById('program-course-hours'), specs.hours);
     else document.getElementById('program-course-hours').innerHTML = renderCardEmpty();
-    if (selected?.monthly.length) renderLineChart(document.getElementById('program-course-demand'), { categories: selected.monthly.map((item) => item.month), series: [{ name: 'Completed sessions', data: selected.monthly.map((item) => item.completed), color: colorFor('EXTERNAL'), area: true }], showLegend: false });
+    if (specs.demand) renderLineChart(document.getElementById('program-course-demand'), specs.demand);
     else document.getElementById('program-course-demand').innerHTML = renderCardEmpty();
     content.querySelectorAll('[data-course]').forEach((row) => row.addEventListener('click', () => { selectedCourseId = row.dataset.course; renderCourses(); }));
   };
@@ -78,8 +129,8 @@ export function renderPrograms(app, { data, idx }) {
       ${renderSectionIntro('2 · Detail', 'External group-code register', 'Open a code for its group detail.')}
       ${renderTableCard({ tableHtml: `<table class="data-table table-mobile-compact"><thead><tr><th>External group code</th><th>Course</th><th class="num">Sessions</th><th class="num">Hours</th><th>Status</th></tr></thead><tbody>${externalRows.map((row) => `<tr class="clickable" data-group="${escapeHtml(row.code)}"><td><strong>${escapeHtml(row.code)}</strong></td><td>${fmt(row.activity?.course_name_clean)}</td><td class="num">${fmt(row.metrics.completedCount, 'int')}</td><td class="num">${fmt(row.metrics.completedHours, 'int')}</td><td>${statusBadge(row.activity?.status_clean)}</td></tr>`).join('')}</tbody></table>` })}
     `;
-    const top = externalRows.slice(0, 10).reverse();
-    if (top.length) renderBarChart(document.getElementById('program-clients'), { categories: top.map((row) => row.code), series: [{ name: 'Sessions', data: top.map((row) => row.metrics.completedCount), color: colorFor('EXTERNAL') }], horizontal: true });
+    const clientSpec = programChartSpecs({ courseRows, externalRows }, selectedCourseId).clients;
+    if (clientSpec) renderBarChart(document.getElementById('program-clients'), clientSpec);
     else document.getElementById('program-clients').innerHTML = renderCardEmpty();
     content.querySelectorAll('[data-group]').forEach((row) => row.addEventListener('click', () => navigate(`#/groups/${encodeURIComponent(row.dataset.group)}`)));
   };
@@ -93,7 +144,8 @@ export function renderPrograms(app, { data, idx }) {
       <section class="evidence-panel" style="margin-bottom:32px"><div class="chart-container" id="program-diplomas"></div></section>
       ${renderTableCard({ tableHtml: `<table class="data-table table-mobile-compact"><thead><tr><th>Programme</th><th class="num">Sessions</th><th>Date range</th></tr></thead><tbody>${data.diplomas.map((row) => `<tr><td>${fmt(row.diploma_type)}</td><td class="num">${fmt(row.session_count, 'int')}</td><td>${fmt(row.date_min, 'date')} – ${fmt(row.date_max, 'date')}</td></tr>`).join('')}</tbody></table>` })}
     `;
-    if (data.diplomas.length) renderBarChart(document.getElementById('program-diplomas'), { categories: data.diplomas.map((row) => row.diploma_type), series: [{ name: 'Sessions', data: data.diplomas.map((row) => row.session_count), color: colorFor('DIPLOMA') }] });
+    const diplomaSpec = diplomaChartSpec(data.diplomas);
+    if (diplomaSpec) renderBarChart(document.getElementById('program-diplomas'), diplomaSpec);
   };
 
   const renderEvents = () => {
@@ -105,7 +157,8 @@ export function renderPrograms(app, { data, idx }) {
       <section class="evidence-panel" style="margin-bottom:32px"><div class="chart-container tall" id="program-events"></div></section>
       ${renderTableCard({ tableHtml: `<table class="data-table table-mobile-compact"><thead><tr><th>Event</th><th>Type</th><th>Dates</th><th class="num">Participants</th></tr></thead><tbody>${data.events.map((row) => `<tr><td>${fmt(row.event_name)}</td><td>${activityTypeLabel(row.event_type)}</td><td>${fmt(row.event_date_start, 'date')} – ${fmt(row.event_date_end, 'date')}</td><td class="num">${row.participant_count != null ? fmt(row.participant_count, 'int') : '—'}</td></tr>`).join('')}</tbody></table>` })}
     `;
-    if (data.events.length) renderBarChart(document.getElementById('program-events'), { categories: data.events.map((row) => row.event_name), series: [{ name: 'Participants', data: data.events.map((row) => row.participant_count), color: colorFor('EVENT') }], horizontal: true });
+    const eventSpec = eventChartSpec(data.events);
+    if (eventSpec) renderBarChart(document.getElementById('program-events'), eventSpec);
   };
 
   const renderers = { courses: renderCourses, clients: renderClients, diplomas: renderDiplomas, events: renderEvents };

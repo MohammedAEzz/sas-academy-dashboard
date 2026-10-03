@@ -6,23 +6,50 @@ let capacityState = { hoursPerInstructor: 30, horizon: '6_month', metric: 'teach
 
 const metricLabels = { teaching_hours: 'Teaching hours', sessions: 'Sessions', groups: 'Groups' };
 
+export function forecastViewState() {
+  return { ...capacityState };
+}
+
+export function forecastCapacity({ forecast, activeCount, hoursPerInstructor = 30, horizon = '6_month' }) {
+  const baselines = forecast.capacity_baselines || {};
+  const hoursSeries = forecast.series.teaching_hours.forecasts[horizon];
+  const months = hoursSeries.point.length;
+  const demand = hoursSeries.point.reduce((sum, value) => sum + value, 0);
+  const available = activeCount * hoursPerInstructor * months;
+  const required = demand / (hoursPerInstructor * months);
+  const gap = demand - available;
+  const crossCheck = Number(baselines.avg_group_starts_per_month || 0)
+    * Number(baselines.avg_sessions_per_group || 0)
+    * Number(baselines.avg_hours_per_session || 0) * months;
+  return { months, demand, available, required, gap, crossCheck, baselines };
+}
+
+export function forecastChartSpec(forecast, metric = 'teaching_hours', horizon = '6_month') {
+  const series = forecast.series[metric];
+  const selectedForecast = series.forecasts[horizon];
+  return {
+    periods: series.periods,
+    actual: series.actual,
+    fitted: series.fitted,
+    forecastPeriods: selectedForecast.periods,
+    forecast: selectedForecast.point,
+    lower: selectedForecast.lower,
+    upper: selectedForecast.upper,
+    selectedForecast,
+  };
+}
+
 export function renderForecast(app, { data }) {
   const forecast = data.forecast;
   const baselines = forecast.capacity_baselines || {};
   const activeCount = data.instructors.filter((instructor) => instructor.status === 'Active').length;
 
-  const computeCapacity = () => {
-    const hoursSeries = forecast.series.teaching_hours.forecasts[capacityState.horizon];
-    const months = hoursSeries.point.length;
-    const demand = hoursSeries.point.reduce((sum, value) => sum + value, 0);
-    const available = activeCount * capacityState.hoursPerInstructor * months;
-    const required = demand / (capacityState.hoursPerInstructor * months);
-    const gap = demand - available;
-    const crossCheck = Number(baselines.avg_group_starts_per_month || 0)
-      * Number(baselines.avg_sessions_per_group || 0)
-      * Number(baselines.avg_hours_per_session || 0) * months;
-    return { months, demand, available, required, gap, crossCheck };
-  };
+  const computeCapacity = () => forecastCapacity({
+    forecast,
+    activeCount,
+    hoursPerInstructor: capacityState.hoursPerInstructor,
+    horizon: capacityState.horizon,
+  });
 
   const capacity = computeCapacity();
   const gapLabel = capacity.gap > 0 ? `${fmt(capacity.gap, 'hours')} shortfall` : `${fmt(Math.abs(capacity.gap), 'hours')} surplus`;
@@ -81,17 +108,9 @@ export function renderForecast(app, { data }) {
   horizonSelect.value = capacityState.horizon;
 
   const update = () => {
-    const series = forecast.series[capacityState.metric];
-    const selectedForecast = series.forecasts[capacityState.horizon];
-    renderForecastChart(document.getElementById('forecast-chart'), {
-      periods: series.periods,
-      actual: series.actual,
-      fitted: series.fitted,
-      forecastPeriods: selectedForecast.periods,
-      forecast: selectedForecast.point,
-      lower: selectedForecast.lower,
-      upper: selectedForecast.upper,
-    });
+    const chartSpec = forecastChartSpec(forecast, capacityState.metric, capacityState.horizon);
+    const selectedForecast = chartSpec.selectedForecast;
+    renderForecastChart(document.getElementById('forecast-chart'), chartSpec);
     const total = selectedForecast.point.reduce((sum, value) => sum + value, 0);
     const low = selectedForecast.lower.reduce((sum, value) => sum + value, 0);
     const high = selectedForecast.upper.reduce((sum, value) => sum + value, 0);

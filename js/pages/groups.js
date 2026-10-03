@@ -16,7 +16,7 @@ let groupsState = { search: '', sortKey: 'start', sortDir: 'desc', page: 1 };
 let detailTimelineExpanded = false;
 let detailShowAllComments = false;
 
-function groupStatusSummary(codes, activities) {
+export function groupStatusSummary(codes, activities) {
   const statusFor = (code) => activities.find((a) => a.group_code === code)?.status_clean || 'UNKNOWN';
   const typeFor = (code) => activities.find((a) => a.group_code === code)?.activity_type || 'UNKNOWN';
   return {
@@ -28,7 +28,7 @@ function groupStatusSummary(codes, activities) {
   };
 }
 
-function monthlyGroups(sessions) {
+export function monthlyGroups(sessions) {
   const map = new Map();
   const ensure = (month) => {
     if (!map.has(month)) map.set(month, { completed: new Set(), planned: new Set() });
@@ -41,6 +41,18 @@ function monthlyGroups(sessions) {
     if (isPlannedSession(session)) ensure(month).planned.add(session.group_code);
   }
   return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([month, value]) => ({ month, completed: value.completed.size, planned: value.planned.size }));
+}
+
+export function groupsMonthlySpec(sessions) {
+  const monthly = monthlyGroups(sessions);
+  if (!monthly.length) return null;
+  return {
+    categories: monthly.map((item) => item.month),
+    series: [
+      { name: 'Completed', data: monthly.map((item) => item.completed), color: completedStyle().color },
+      { name: 'Planned', data: monthly.map((item) => item.planned), color: plannedStyle().color, dashed: true },
+    ],
+  };
 }
 
 export function renderGroups(app, { data, idx }) {
@@ -110,14 +122,9 @@ export function renderGroups(app, { data, idx }) {
     })}
   `;
 
-  const monthly = monthlyGroups(sessions);
-  if (monthly.length) renderBarChart(document.getElementById('groups-monthly'), {
-    categories: monthly.map((item) => item.month),
-    series: [
-      { name: 'Completed', data: monthly.map((item) => item.completed), color: completedStyle().color },
-      { name: 'Planned', data: monthly.map((item) => item.planned), color: plannedStyle().color, dashed: true },
-    ],
-  }); else document.getElementById('groups-monthly').innerHTML = renderCardEmpty();
+  const monthlySpec = groupsMonthlySpec(sessions);
+  if (monthlySpec) renderBarChart(document.getElementById('groups-monthly'), monthlySpec);
+  else document.getElementById('groups-monthly').innerHTML = renderCardEmpty();
 
   const wrap = app.querySelector('.table-wrap');
   wrap?.querySelectorAll('th').forEach((th) => th.addEventListener('click', () => {

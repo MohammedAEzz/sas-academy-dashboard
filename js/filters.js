@@ -98,8 +98,7 @@ const ACTIVITY_COLORS = {
   EVENT: '#eda100',
 };
 
-export function activeFilterChips(idx) {
-  const f = getFilters();
+function filterChips(f, idx) {
   const chips = [];
   if (f.dateFrom || f.dateTo) {
     chips.push({ key: 'dateFrom', label: `Dates: ${f.dateFrom || '…'} – ${f.dateTo || '…'}`, color: null });
@@ -125,6 +124,38 @@ export function activeFilterChips(idx) {
     chips.push({ key, label: `${label}: ${display}`, color });
   }
   return chips;
+}
+
+export function activeFilterChips(idx) {
+  return filterChips(getFilters(), idx);
+}
+
+/** Plain-language labels for a filter snapshot. Empty when nothing is applied. */
+export function describeAppliedFilters(filters, idx) {
+  return filterChips(filters || getFilters(), idx).map((chip) => chip.label);
+}
+
+const emptyFilters = {
+  dateFrom: '',
+  dateTo: '',
+  datePreset: 'all',
+  activityType: '',
+  groupCode: '',
+  courseId: '',
+  instructorId: '',
+  language: '',
+  status: '',
+};
+
+/** Run fn against a filter snapshot without notifying listeners or keeping the change. */
+export function withFilters(filters, fn) {
+  const previous = state;
+  state = { ...emptyFilters, ...(filters || {}) };
+  try {
+    return fn();
+  } finally {
+    state = previous;
+  }
 }
 
 export function removeFilter(key) {

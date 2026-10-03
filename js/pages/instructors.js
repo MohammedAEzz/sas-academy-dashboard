@@ -15,7 +15,7 @@ import { navigate } from '../router.js';
 let instState = { search: '', sortKey: 'hours', sortDir: 'desc', page: 1, minFeedback: 10, topN: 5 };
 let profileShowAllComments = false;
 
-function buildRows(data, idx, sessions, activities, feedback) {
+export function buildInstructorRows(data, idx, sessions, activities, feedback) {
   return data.instructors.map((instructor) => {
     const metrics = instructorRowMetrics(instructor.instructor_id, idx, sessions, activities, feedback);
     return { ...metrics, name: instructor.instructor_name_clean, status: instructor.status };
@@ -38,7 +38,7 @@ function rowSortValue(row, key) {
   return values[key] ?? row[key];
 }
 
-function sortRows(rows, key, direction) {
+export function sortInstructorRows(rows, key, direction) {
   return rows.sort((a, b) => {
     const av = rowSortValue(a, key); const bv = rowSortValue(b, key);
     const multiplier = direction === 'asc' ? 1 : -1;
@@ -46,19 +46,42 @@ function sortRows(rows, key, direction) {
   });
 }
 
+export function instructorChartSpecs(rows, { topN = 5, minFeedback = 10 } = {}) {
+  const byHours = [...rows].sort((a, b) => b.sessionMetrics.completedHours - a.sessionMetrics.completedHours);
+  const rankable = rows.filter((row) => row.feedback.distinctCount >= minFeedback);
+  const byRating = [...rankable].sort((a, b) => (b.feedback.avgSatisfaction ?? 0) - (a.feedback.avgSatisfaction ?? 0)).slice(0, topN);
+  const byBreadth = [...rows].sort((a, b) => b.courses - a.courses || b.sessionMetrics.completedHours - a.sessionMetrics.completedHours).slice(0, topN);
+  const byUpcoming = [...rows].filter((row) => row.sessionMetrics.plannedCount > 0).sort((a, b) => b.sessionMetrics.plannedHours - a.sessionMetrics.plannedHours).slice(0, topN);
+  const horizontal = (items, value, label, color, nameOf = (row) => row.name) => (items.length ? {
+    categories: items.map(nameOf).reverse(),
+    series: [{ name: label, data: items.map(value).reverse(), color }],
+    horizontal: true,
+  } : null);
+  return {
+    byHours,
+    rankable,
+    byRating,
+    byBreadth,
+    byUpcoming,
+    charts: {
+      hours: horizontal(byHours.slice(0, topN), (row) => Math.round(row.sessionMetrics.completedHours), 'Hours', colorFor('EXTERNAL')),
+      breadth: horizontal(byBreadth, (row) => row.courses, 'Courses', colorFor('INTERNAL')),
+      rating: horizontal(byRating, (row) => Number(row.feedback.avgSatisfaction.toFixed(2)), 'Rating', colorFor('DIPLOMA'), (row) => `${row.name} (n=${row.feedback.distinctCount})`),
+      upcoming: horizontal(byUpcoming, (row) => Math.round(row.sessionMetrics.plannedHours), 'Planned hours', colorFor('EXTERNAL')),
+    },
+  };
+}
+
 export function renderInstructors(app, { data, idx }) {
   const sessions = filterSessions(data.sessions);
   const activities = filterActivities(data.activities);
   const feedback = filterFeedback(data.feedback);
-  let rows = buildRows(data, idx, sessions, activities, feedback);
+  let rows = buildInstructorRows(data, idx, sessions, activities, feedback);
   if (instState.search) rows = rows.filter((row) => row.name.toLowerCase().includes(instState.search.toLowerCase()));
-  sortRows(rows, instState.sortKey, instState.sortDir);
+  sortInstructorRows(rows, instState.sortKey, instState.sortDir);
 
-  const byHours = [...rows].sort((a, b) => b.sessionMetrics.completedHours - a.sessionMetrics.completedHours);
-  const rankable = rows.filter((row) => row.feedback.distinctCount >= instState.minFeedback);
-  const byRating = [...rankable].sort((a, b) => (b.feedback.avgSatisfaction ?? 0) - (a.feedback.avgSatisfaction ?? 0)).slice(0, instState.topN);
-  const byBreadth = [...rows].sort((a, b) => b.courses - a.courses || b.sessionMetrics.completedHours - a.sessionMetrics.completedHours).slice(0, instState.topN);
-  const byUpcoming = [...rows].filter((row) => row.sessionMetrics.plannedCount > 0).sort((a, b) => b.sessionMetrics.plannedHours - a.sessionMetrics.plannedHours).slice(0, instState.topN);
+  const ranked = instructorChartSpecs(rows, { topN: instState.topN, minFeedback: instState.minFeedback });
+  const { byHours, rankable } = ranked;
   const totalHours = sessionMetrics(sessions).completedHours;
   const topFiveShare = totalHours ? (byHours.slice(0, 5).reduce((sum, row) => sum + row.sessionMetrics.completedHours, 0) / totalHours * 100).toFixed(1) : '0.0';
   const activeCount = rows.filter((row) => row.status === 'Active').length;
@@ -115,17 +138,15 @@ export function renderInstructors(app, { data, idx }) {
     })}
   `;
 
-  const renderRanking = (id, items, value, label, color) => {
+  const paintRanking = (id, spec, emptyMessage) => {
     const target = document.getElementById(id);
-    if (!items.length) { target.innerHTML = renderCardEmpty(); return; }
-    renderBarChart(target, { categories: items.map((row) => row.name).reverse(), series: [{ name: label, data: items.map(value).reverse(), color }], horizontal: true });
+    if (!spec) { target.innerHTML = renderCardEmpty(emptyMessage); return; }
+    renderBarChart(target, spec);
   };
-  renderRanking('rank-hours', byHours.slice(0, instState.topN), (row) => Math.round(row.sessionMetrics.completedHours), 'Hours', colorFor('EXTERNAL'));
-  renderRanking('rank-breadth', byBreadth, (row) => row.courses, 'Courses', colorFor('INTERNAL'));
-  const ratingTarget = document.getElementById('rank-rating');
-  if (byRating.length) renderBarChart(ratingTarget, { categories: byRating.map((row) => `${row.name} (n=${row.feedback.distinctCount})`).reverse(), series: [{ name: 'Rating', data: byRating.map((row) => Number(row.feedback.avgSatisfaction.toFixed(2))).reverse(), color: colorFor('DIPLOMA') }], horizontal: true });
-  else ratingTarget.innerHTML = renderCardEmpty(`No instructors meet n≥${instState.minFeedback}`);
-  renderRanking('rank-upcoming', byUpcoming, (row) => Math.round(row.sessionMetrics.plannedHours), 'Planned hours', colorFor('EXTERNAL'));
+  paintRanking('rank-hours', ranked.charts.hours);
+  paintRanking('rank-breadth', ranked.charts.breadth);
+  paintRanking('rank-rating', ranked.charts.rating, `No instructors meet n≥${instState.minFeedback}`);
+  paintRanking('rank-upcoming', ranked.charts.upcoming);
 
   app.querySelectorAll('#instructor-topn [data-top]').forEach((button) => button.addEventListener('click', () => { instState.topN = Number(button.dataset.top); renderInstructors(app, { data, idx }); }));
   app.querySelector('#min-fb')?.addEventListener('change', (event) => { instState.minFeedback = Number(event.target.value) || 10; renderInstructors(app, { data, idx }); });

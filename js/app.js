@@ -12,6 +12,7 @@ import { renderPrograms } from './pages/programs.js';
 import { renderForecast } from './pages/forecast.js';
 import { renderData } from './pages/data.js';
 import { escapeHtml } from './core/escape.js';
+import { mountExportDialog } from './export-dialog.js';
 
 let idx = null;
 
@@ -95,6 +96,7 @@ async function init() {
     };
 
     paintChrome();
+    mountExportDialog({ getData: () => data, getIdx: () => idx });
     bindFilterUpdates(filterBar, () => idx, rerender);
     onDataReload(() => {
       paintChrome();

@@ -11,7 +11,11 @@ import { activityTypeLabel, isHistoricalSession, isPlannedSession, monthKey } fr
 
 let pulseMetric = 'sessions';
 
-function deliveryPulse(sessions, metric) {
+export function overviewPulseMetric() {
+  return pulseMetric;
+}
+
+export function deliveryPulse(sessions, metric) {
   const buckets = new Map();
   const ensure = (month) => {
     if (!buckets.has(month)) buckets.set(month, { completed: 0, planned: 0, completedGroups: new Set(), plannedGroups: new Set() });
@@ -37,7 +41,7 @@ function deliveryPulse(sessions, metric) {
   }));
 }
 
-function recentDirection(sessions) {
+export function recentDirection(sessions) {
   const series = deliveryPulse(sessions, 'hours').filter((d) => d.completed > 0);
   if (series.length < 6) return { label: 'Trend unavailable', detail: 'Fewer than six completed months in the current filter' };
   const recent = series.slice(-3).reduce((sum, d) => sum + d.completed, 0);
@@ -47,6 +51,48 @@ function recentDirection(sessions) {
   return {
     label: `${Math.abs(pct)}% ${pct >= 0 ? 'higher' : 'lower'}`,
     detail: 'Completed hours in the latest 3 active months vs the prior 3',
+  };
+}
+
+export function overviewPulseSpec(sessions, metric) {
+  const pulse = deliveryPulse(sessions, metric);
+  if (!pulse.length) return null;
+  const comp = completedStyle();
+  const plan = plannedStyle();
+  return {
+    categories: pulse.map((item) => item.month),
+    series: [
+      { name: 'Completed', data: pulse.map((item) => Math.round(item.completed)), color: comp.color, area: true },
+      { name: 'Planned', data: pulse.map((item) => Math.round(item.planned)), color: plan.color, dashed: true },
+    ],
+    yName: metric === 'hours' ? 'Hours' : metric === 'groups' ? 'Groups' : 'Sessions',
+  };
+}
+
+export function overviewCourseSpec(courses) {
+  if (!courses.length) return null;
+  return {
+    categories: courses.map((course) => course.name),
+    series: [{ name: 'Hours', data: courses.map((course) => Math.round(course.hours)), color: colorFor('DIPLOMA') }],
+    horizontal: true,
+  };
+}
+
+export function overviewWorkloadSpec(workload) {
+  if (!workload.length) return null;
+  return {
+    categories: workload.map((item) => item.name).reverse(),
+    series: [{ name: 'Hours', data: workload.map((item) => Math.round(item.hours)).reverse(), color: colorFor('EXTERNAL') }],
+    horizontal: true,
+  };
+}
+
+export function overviewSatisfactionSpec(sat) {
+  if (!sat.length) return null;
+  return {
+    categories: sat.map((item) => item.month),
+    series: [{ name: 'Satisfaction', data: sat.map((item) => Number(item.avg.toFixed(2))), color: colorFor('DIPLOMA'), area: true }],
+    showLegend: false,
   };
 }
 
@@ -60,8 +106,6 @@ export function renderOverview(app, { data, idx }) {
   const upcomingGroups = plannedGroups(activities);
   const trendDirection = recentDirection(sessions);
   const rosterActive = data.instructors.filter((i) => i.status === 'Active').length;
-  const comp = completedStyle();
-  const plan = plannedStyle();
   const breakdown = activityTypeBreakdown(sessions).sort((a, b) => b.hours - a.hours);
   const totalMixHours = breakdown.reduce((sum, item) => sum + item.hours, 0);
   const workload = instructorWorkload(sessions, idx.instructorMap, 10);
@@ -155,17 +199,10 @@ export function renderOverview(app, { data, idx }) {
   `;
 
   const renderPulse = () => {
-    const pulse = deliveryPulse(sessions, pulseMetric);
+    const spec = overviewPulseSpec(sessions, pulseMetric);
     const target = document.getElementById('overview-pulse');
-    if (!pulse.length) { target.innerHTML = renderCardEmpty(); return; }
-    renderLineChart(target, {
-      categories: pulse.map((item) => item.month),
-      series: [
-        { name: 'Completed', data: pulse.map((item) => Math.round(item.completed)), color: comp.color, area: true },
-        { name: 'Planned', data: pulse.map((item) => Math.round(item.planned)), color: plan.color, dashed: true },
-      ],
-      yName: pulseMetric === 'hours' ? 'Hours' : pulseMetric === 'groups' ? 'Groups' : 'Sessions',
-    });
+    if (!spec) { target.innerHTML = renderCardEmpty(); return; }
+    renderLineChart(target, spec);
   };
   renderPulse();
   app.querySelectorAll('#pulse-switch [data-metric]').forEach((button) => button.addEventListener('click', () => {
@@ -174,24 +211,15 @@ export function renderOverview(app, { data, idx }) {
     renderPulse();
   }));
 
-  if (courses.length) renderBarChart(document.getElementById('overview-courses'), {
-    categories: courses.map((course) => course.name),
-    series: [{ name: 'Hours', data: courses.map((course) => Math.round(course.hours)), color: colorFor('DIPLOMA') }],
-    horizontal: true,
-  });
+  const courseSpec = overviewCourseSpec(courses);
+  if (courseSpec) renderBarChart(document.getElementById('overview-courses'), courseSpec);
   else document.getElementById('overview-courses').innerHTML = renderCardEmpty();
 
-  if (workload.length) renderBarChart(document.getElementById('overview-workload'), {
-    categories: workload.map((item) => item.name).reverse(),
-    series: [{ name: 'Hours', data: workload.map((item) => Math.round(item.hours)).reverse(), color: colorFor('EXTERNAL') }],
-    horizontal: true,
-  });
+  const workloadSpec = overviewWorkloadSpec(workload);
+  if (workloadSpec) renderBarChart(document.getElementById('overview-workload'), workloadSpec);
   else document.getElementById('overview-workload').innerHTML = renderCardEmpty();
 
-  if (sat.length) renderLineChart(document.getElementById('overview-satisfaction'), {
-    categories: sat.map((item) => item.month),
-    series: [{ name: 'Satisfaction', data: sat.map((item) => Number(item.avg.toFixed(2))), color: colorFor('DIPLOMA'), area: true }],
-    showLegend: false,
-  });
+  const satSpec = overviewSatisfactionSpec(sat);
+  if (satSpec) renderLineChart(document.getElementById('overview-satisfaction'), satSpec);
   else document.getElementById('overview-satisfaction').innerHTML = renderCardEmpty();
 }

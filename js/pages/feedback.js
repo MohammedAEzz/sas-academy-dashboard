@@ -16,13 +16,17 @@ let commentSearch = '';
 let showAllComments = false;
 let comparisonMode = 'course';
 
-const VALIDATED_TOP_TOKENS = [
+export function feedbackComparisonMode() {
+  return comparisonMode;
+}
+
+export const VALIDATED_TOP_TOKENS = [
   ['thanks', 430], ['excellent', 371], ['sas', 302], ['thank', 236],
   ['instructor', 235], ['good', 217], ['training', 170], ['course', 159],
   ['content', 139], ['time', 138], ['practical', 125], ['helpful', 114],
 ];
 
-function comparisonRows(rows, key, labelFor, minimum = 10) {
+export function comparisonRows(rows, key, labelFor, minimum = 10) {
   const groups = new Map();
   for (const row of rows) {
     const id = row[key];
@@ -38,6 +42,36 @@ function comparisonRows(rows, key, labelFor, minimum = 10) {
   }).filter((item) => item.avg != null && item.count >= minimum)
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
+}
+
+export function feedbackChartSpecs(feedback, idx, comparisonMode = 'course') {
+  const trend = satisfactionTrend(feedback);
+  const questions = perQuestionBreakdown(feedback);
+  const comparison = comparisonMode === 'course'
+    ? comparisonRows(feedback, 'course_id', (id) => idx.courseName(id), 10)
+    : comparisonRows(feedback, 'instructor_id', (id) => idx.instructorName(id), 10);
+  return {
+    trend,
+    questions,
+    comparison,
+    charts: {
+      trend: trend.length ? {
+        categories: trend.map((item) => item.month),
+        series: [{ name: 'Satisfaction', data: trend.map((item) => Number(item.avg.toFixed(2))), color: colorFor('DIPLOMA'), area: true }],
+        showLegend: false,
+      } : null,
+      comparison: comparison.length ? {
+        categories: comparison.map((item) => `${item.name} (n=${item.count})`).reverse(),
+        series: [{ name: 'Average rating', data: comparison.map((item) => Number(item.avg.toFixed(2))).reverse(), color: colorFor('EXTERNAL') }],
+        horizontal: true,
+      } : null,
+      questions: questions.some((item) => item.avg != null) ? {
+        categories: questions.map((item) => `${item.label} (n=${fmt(item.count, 'int')})`),
+        values: questions.map((item) => (item.avg != null ? Number(item.avg.toFixed(2)) : null)),
+        max: 5,
+      } : null,
+    },
+  };
 }
 
 export function renderFeedback(app, { data, idx }) {
@@ -115,11 +149,12 @@ export function renderFeedback(app, { data, idx }) {
     </div>
   `;
 
-  if (trend.length) renderLineChart(document.getElementById('feedback-trend'), { categories: trend.map((item) => item.month), series: [{ name: 'Satisfaction', data: trend.map((item) => Number(item.avg.toFixed(2))), color: colorFor('DIPLOMA'), area: true }], showLegend: false });
+  const chartSpecs = feedbackChartSpecs(feedback, idx, comparisonMode);
+  if (chartSpecs.charts.trend) renderLineChart(document.getElementById('feedback-trend'), chartSpecs.charts.trend);
   else document.getElementById('feedback-trend').innerHTML = renderCardEmpty();
-  if (comparison.length) renderBarChart(document.getElementById('feedback-comparison'), { categories: comparison.map((item) => `${item.name} (n=${item.count})`).reverse(), series: [{ name: 'Average rating', data: comparison.map((item) => Number(item.avg.toFixed(2))).reverse(), color: colorFor('EXTERNAL') }], horizontal: true });
+  if (chartSpecs.charts.comparison) renderBarChart(document.getElementById('feedback-comparison'), chartSpecs.charts.comparison);
   else document.getElementById('feedback-comparison').innerHTML = renderCardEmpty('No comparison meets the minimum response threshold');
-  if (questions.some((item) => item.avg != null)) renderDivergingBar(document.getElementById('feedback-questions'), { categories: questions.map((item) => `${item.label} (n=${fmt(item.count, 'int')})`), values: questions.map((item) => item.avg != null ? Number(item.avg.toFixed(2)) : null), max: 5 });
+  if (chartSpecs.charts.questions) renderDivergingBar(document.getElementById('feedback-questions'), chartSpecs.charts.questions);
   else document.getElementById('feedback-questions').innerHTML = renderCardEmpty();
 
   app.querySelectorAll('#comparison-switch [data-mode]').forEach((button) => button.addEventListener('click', () => { comparisonMode = button.dataset.mode; renderFeedback(app, { data, idx }); }));

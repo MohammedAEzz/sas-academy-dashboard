@@ -7,6 +7,7 @@ import { createSearchableSelect } from './searchable-dropdown.js';
 import { createDateRangePicker } from './date-range-picker.js';
 import { activityColor } from './charts.js';
 import { isSubstantiveComment } from './text-insights.js';
+import { dataQualityNotes } from './domain/data-notes.js';
 
 export function renderFilterBar(container, idx) {
   const f = getFilters();
@@ -305,16 +306,7 @@ export function bindWordFrequency(panel, callback) {
 export { escapeHtml };
 
 export function renderDataQuality(overview, idx) {
-  const unmappedDistinct = new Set(idx.unmappedFeedback.map((f) => f.feedback_id)).size;
-  return `
-    <span>Data as of ${overview.as_of_date}</span>
-    <span>Historical series from ${overview.clean_series_first_month}</span>
-    <span>${overview.total_feedback.toLocaleString()} distinct feedback responses</span>
-    <span>${unmappedDistinct} unmapped feedback (not attached to groups)</span>
-    <span>Student counts: ${overview.student_count_coverage?.activities_with_students}/${overview.student_count_coverage?.total_activities} activities</span>
-    ${overview.teaching_hour_coverage ? `<span>Teaching-hour coverage: ${overview.teaching_hour_coverage.pct}% of historical sessions (${overview.teaching_hour_coverage.sessions_with_hours.toLocaleString()} of ${overview.teaching_hour_coverage.total_sessions.toLocaleString()})</span>` : ''}
-    ${overview.legacy_sessions_provenance ? `<span>${overview.legacy_sessions_provenance}</span>` : ''}
-  `;
+  return dataQualityNotes(overview, idx).map((note) => `<span>${note}</span>`).join('\n');
 }
 
 export { activityColor };
