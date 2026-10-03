@@ -1,4 +1,4 @@
-import { Pool } from "@neondatabase/serverless";
+import { Pool, neon } from "@neondatabase/serverless";
 import { AppError } from "./errors.js";
 
 let override = null;
@@ -20,7 +20,10 @@ export function getDb() {
 }
 
 export function createNeonAdapter(connectionString) {
-  const pool = new Pool({ connectionString });
+  // Stand-alone reads use Neon's HTTP driver (one round trip, no WebSocket handshake);
+  // the WebSocket Pool is opened lazily and only for interactive transactions.
+  const http = neon(connectionString);
+  let pool = null;
   const wrap = (runner) => ({
     async query(text, params = []) {
       const result = await runner.query(text, params);
@@ -28,8 +31,11 @@ export function createNeonAdapter(connectionString) {
     },
   });
   return {
-    ...wrap(pool),
+    async query(text, params = []) {
+      return { rows: await http.query(text, params) };
+    },
     async transaction(fn) {
+      if (!pool) pool = new Pool({ connectionString });
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -48,7 +54,7 @@ export function createNeonAdapter(connectionString) {
       }
     },
     async close() {
-      await pool.end();
+      if (pool) await pool.end();
     },
   };
 }

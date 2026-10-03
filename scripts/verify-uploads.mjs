@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const BASE = 'http://127.0.0.1:3100';
+const BASE = process.env.VERIFY_BASE_URL || 'http://127.0.0.1:3100';
 const PASSWORD = process.env.ADMIN_PASSWORD || 'dev-admin-password';
 const SCREENSHOT_DIR = '/tmp/dashboard-screenshots';
 const FIXTURES = '/tmp/sas-upload-fixtures';
@@ -203,14 +203,16 @@ async function main() {
   assert(/duplicate 3/.test(duplicatePreview), 're-upload marks every example instructor row as duplicate');
   assert(await page.locator('#commit-import').isDisabled(), 'import stays disabled when nothing new is valid');
   const sha = createHash('sha256').update(readFileSync(exampleInstructors)).digest('hex');
-  const rejected = await page.request.post(`${BASE}/api/imports?action=commit`, {
-    multipart: {
-      dataset: 'instructors',
-      sha256: sha,
-      previewCounts: JSON.stringify({ total: 3, valid: 0, duplicate: 3, conflict: 0, error: 0 }),
-      file: { name: 'instructors-example.csv', mimeType: 'text/csv', buffer: readFileSync(exampleInstructors) },
-    },
-    headers: { 'X-Requested-With': 'fetch', Origin: BASE },
+  const commitParams = new URLSearchParams({
+    action: 'commit',
+    dataset: 'instructors',
+    filename: 'instructors-example.csv',
+    sha256: sha,
+    previewCounts: JSON.stringify({ total: 3, valid: 0, duplicate: 3, conflict: 0, error: 0 }),
+  });
+  const rejected = await page.request.post(`${BASE}/api/imports?${commitParams}`, {
+    data: readFileSync(exampleInstructors),
+    headers: { 'X-Requested-With': 'fetch', Origin: BASE, 'Content-Type': 'application/octet-stream' },
   });
   const rejectedBody = await rejected.json();
   assert(rejected.status() === 409 && rejectedBody.error?.code === 'ALREADY_IMPORTED', `same file commit is ALREADY_IMPORTED (${rejected.status()} ${rejectedBody.error?.code})`);

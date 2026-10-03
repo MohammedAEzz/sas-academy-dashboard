@@ -10,14 +10,16 @@ export function friendlyError(error) {
   return error.message || 'Something went wrong.';
 }
 
-export async function api(path, { method = 'GET', json, form } = {}) {
+export async function api(path, { method = 'GET', json, file } = {}) {
   const headers = { ...JSON_HEADERS };
   let body;
   if (json !== undefined) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(json);
-  } else if (form) {
-    body = form;
+  } else if (file) {
+    // Raw bytes, not multipart: the Vercel runtime drains multipart bodies before the handler.
+    headers['Content-Type'] = 'application/octet-stream';
+    body = file;
   }
   let response;
   try {
@@ -54,20 +56,18 @@ export function logout() {
   return api('/api/auth?action=logout', { method: 'POST', json: {} });
 }
 
+function uploadPath(action, fields) {
+  const params = new URLSearchParams({ action, ...fields });
+  return `/api/imports?${params}`;
+}
+
 export function previewImport({ dataset, file }) {
-  const form = new FormData();
-  form.append('dataset', dataset);
-  form.append('file', file, file.name);
-  return api('/api/imports?action=preview', { method: 'POST', form });
+  return api(uploadPath('preview', { dataset, filename: file.name }), { method: 'POST', file });
 }
 
 export function commitImport({ dataset, file, sha256, previewCounts }) {
-  const form = new FormData();
-  form.append('dataset', dataset);
-  form.append('file', file, file.name);
-  form.append('sha256', sha256);
-  form.append('previewCounts', JSON.stringify(previewCounts));
-  return api('/api/imports?action=commit', { method: 'POST', form });
+  const fields = { dataset, filename: file.name, sha256, previewCounts: JSON.stringify(previewCounts) };
+  return api(uploadPath('commit', fields), { method: 'POST', file });
 }
 
 export function importHistory() {

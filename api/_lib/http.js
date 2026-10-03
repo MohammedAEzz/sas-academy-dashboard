@@ -90,13 +90,23 @@ export async function readRequestBody(req) {
   if (req.body != null && typeof req.body === "object" && !Buffer.isBuffer(req.body)) {
     return req.body;
   }
-  const chunks = [];
-  if (req[Symbol.asyncIterator]) {
-    for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  // The Vercel Node runtime may already have consumed the stream and exposed the raw
+  // body as a Buffer or string (e.g. multipart); use it instead of re-reading.
+  let buffer;
+  if (Buffer.isBuffer(req.body)) {
+    buffer = req.body;
+  } else if (typeof req.body === "string") {
+    buffer = Buffer.from(req.body, "utf8");
+  } else {
+    const chunks = [];
+    if (req[Symbol.asyncIterator]) {
+      for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    buffer = Buffer.concat(chunks);
   }
-  const buffer = Buffer.concat(chunks);
   const type = String(req.headers["content-type"] || "");
   if (type.includes("multipart/form-data")) return parseMultipart(buffer, type);
+  if (type.includes("application/octet-stream")) return uploadFromRawBody(req, buffer);
   if (!buffer.length) return {};
   if (type.includes("application/json") || buffer[0] === 0x7b || buffer[0] === 0x5b) {
     try {
@@ -106,6 +116,27 @@ export async function readRequestBody(req) {
     }
   }
   throw new AppError("BAD_REQUEST", "Send JSON or multipart form data.", 400);
+}
+
+// Raw file upload: the file bytes are the body and the fields travel in the query string.
+// Used by the browser because the Vercel runtime drains multipart bodies before the handler.
+function uploadFromRawBody(req, buffer) {
+  const params = requestUrl(req).searchParams;
+  let previewCounts = null;
+  if (params.get("previewCounts")) {
+    try {
+      previewCounts = JSON.parse(params.get("previewCounts"));
+    } catch {
+      throw new AppError("BAD_REQUEST", "previewCounts must be JSON.", 400);
+    }
+  }
+  return {
+    dataset: params.get("dataset") || "",
+    filename: params.get("filename") || "",
+    sha256: params.get("sha256") || "",
+    previewCounts,
+    contentBase64: buffer.toString("base64"),
+  };
 }
 
 function parseMultipart(buffer, contentType) {

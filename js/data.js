@@ -13,7 +13,8 @@ const FILES = [
   'forecast.json',
 ];
 
-const UPLOAD_TIMEOUT_MS = 2500;
+// Generous: the free Neon database suspends when idle and its first query after a pause is slow.
+const UPLOAD_TIMEOUT_MS = 12000;
 
 const data = {
   overview: null,
