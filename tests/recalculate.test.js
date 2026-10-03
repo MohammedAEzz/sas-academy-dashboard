@@ -188,6 +188,27 @@ describe('combined aggregates', () => {
   });
 });
 
+describe('historical as-of date', () => {
+  const base = Object.fromEntries(
+    ['overview', 'activities', 'sessions', 'instructors', 'courses', 'feedback', 'events', 'diplomas', 'forecast']
+      .map((name) => [name, load(`${name}.json`)]),
+  );
+
+  it('keeps the historical cut-off when an upload advances the data date', () => {
+    const combined = combineDashboard(base, {
+      instructors: [], courses: [], groups: [], feedback: [], events: [],
+      sessions: [{
+        session_id: 'SES_U000010', session_date: '2026-09-20', date_confidence: 'HIGH',
+        status_clean: 'COMPLETED', status_basis: 'EXPLICIT', duration_hours: 5,
+        group_code: 'MBA-G1', activity_type: 'INTERNAL',
+      }],
+    }, { today: '2026-10-04' });
+
+    assert.equal(combined.overview.as_of_date, '2026-09-20');
+    assert.equal(combined.overview.historical_as_of_date, base.overview.as_of_date);
+  });
+});
+
 describe('escapeHtml', () => {
   it('neutralises markup from uploaded names and comments', () => {
     const raw = `<img src=x onerror="alert(1)"> & 'quote'`;

@@ -77,7 +77,8 @@ function statusCounts(sessions) {
 }
 
 export function recomputeOverview(baseOverview, combined, { hasUploads = false } = {}) {
-  const overview = { ...baseOverview };
+  // The historical cut-off never moves; as_of_date may advance to the latest uploaded data.
+  const overview = { ...baseOverview, historical_as_of_date: baseOverview?.as_of_date ?? null };
   const sessions = combined.sessions || [];
   const activities = combined.activities || [];
   const feedback = combined.feedback || [];

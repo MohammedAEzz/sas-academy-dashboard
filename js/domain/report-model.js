@@ -476,7 +476,7 @@ function assemble(data, idx, { scope, stamp }) {
     filename: stamp.filename,
     cover: {
       dataUpdated: dataUpdatedLabel(data.meta),
-      historicalAsOf: data.overview?.as_of_date || '—',
+      historicalAsOf: data.overview?.historical_as_of_date || data.overview?.as_of_date || '—',
       scope,
       scopeLabel: scope === 'full' ? 'Full dataset (all filters cleared)' : 'Current filters',
       filters: filterLabels.length ? filterLabels : ['No filters applied'],
