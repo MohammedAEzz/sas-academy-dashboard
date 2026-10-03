@@ -487,6 +487,7 @@ function classifySessions(values, rowNumber, catalog, index, asOf) {
     duration_hours: duration.value,
     language: language.value || "",
     activity_type: activityType.value,
+    diploma_type: isDiploma ? diploma.value : null,
     status_clean: status.value,
     status_basis: status.value ? "EXPLICIT" : null,
   }];

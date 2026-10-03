@@ -123,7 +123,7 @@ export function createRepository(db) {
       const result = await query(
         db,
         `SELECT id, dataset, filename, file_sha256, total_rows, imported_count, duplicate_count,
-                conflict_count, error_count, created_at, reverted_at, revert_reason
+                conflict_count, error_count, skipped_row_details, created_at, reverted_at, revert_reason
          FROM imports
          ORDER BY created_at DESC`,
       );
@@ -185,12 +185,8 @@ export function createRepository(db) {
       const meta = await query(
         db,
         `SELECT
-           (SELECT COUNT(*) FROM imports WHERE reverted_at IS NULL) AS import_count,
-           (SELECT MAX(v) FROM (
-              SELECT created_at AS v FROM imports
-              UNION ALL
-              SELECT reverted_at FROM imports WHERE reverted_at IS NOT NULL
-            ) stamps) AS last_updated_at`,
+           (SELECT COUNT(*) FROM imports WHERE reverted_at IS NULL AND imported_count >= 1) AS import_count,
+           (SELECT MAX(created_at) FROM imports WHERE reverted_at IS NULL AND imported_count >= 1) AS last_updated_at`,
       );
       return { active, meta: meta.rows[0] };
     },
@@ -221,8 +217,21 @@ export function createRepository(db) {
   };
 }
 
+function jsonList(value) {
+  if (value == null) return [];
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(value) ? value : [];
+}
+
 function mapImport(row) {
-  return {
+  const mapped = {
     id: row.id,
     dataset: row.dataset,
     filename: row.filename,
@@ -236,4 +245,6 @@ function mapImport(row) {
     revertedAt: isoDate(row.reverted_at),
     revertReason: row.revert_reason || null,
   };
+  if ("skipped_row_details" in row) mapped.skipped = jsonList(row.skipped_row_details);
+  return mapped;
 }

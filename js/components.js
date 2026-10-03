@@ -1,6 +1,7 @@
 import {
   getFilters, setFilter, clearFilters, removeFilter, activeFilterChips, onFilterChange,
 } from './filters.js';
+import { escapeHtml } from './core/escape.js';
 import { activityTypeLabel } from './format.js';
 import { createSearchableSelect } from './searchable-dropdown.js';
 import { createDateRangePicker } from './date-range-picker.js';
@@ -113,16 +114,17 @@ function renderChips(chipsEl, idx) {
   if (!chips.length) { chipsEl.innerHTML = ''; return; }
   chipsEl.innerHTML = chips.map((c) => {
     const swatch = c.color ? `<span class="chip-swatch" style="background:${c.color}"></span>` : '';
-    return `<span class="chip">${swatch}${c.label}<button type="button" data-key="${c.key}" aria-label="Remove filter">✕</button></span>`;
+    return `<span class="chip">${swatch}${escapeHtml(c.label)}<button type="button" data-key="${c.key}" aria-label="Remove filter">✕</button></span>`;
   }).join('');
   chipsEl.querySelectorAll('button').forEach((btn) => {
     btn.addEventListener('click', () => removeFilter(btn.dataset.key));
   });
 }
 
-export function bindFilterUpdates(container, idx, rerender) {
+export function bindFilterUpdates(container, idxOrGet, rerender) {
+  const getIdx = typeof idxOrGet === 'function' ? idxOrGet : () => idxOrGet;
   return onFilterChange(() => {
-    renderFilterBar(container, idx);
+    renderFilterBar(container, getIdx());
     rerender();
   });
 }
@@ -214,7 +216,7 @@ export function renderTable({ columns, rows, sortKey, sortDir, rowClass, onRowCl
   `).join('');
   const tr = rows.map((r, i) => `
     <tr class="${rowClass ? rowClass(r) : ''}${onRowClick ? ' clickable' : ''}" data-idx="${i}">
-      ${columns.map((c) => `<td class="${c.num ? 'num' : ''}">${c.render ? c.render(r) : r[c.key]}</td>`).join('')}
+      ${columns.map((c) => `<td class="${c.num ? 'num' : ''}">${c.render ? c.render(r) : escapeHtml(r[c.key] ?? '')}</td>`).join('')}
     </tr>
   `).join('');
   return `<table class="data-table" id="${id}"><thead><tr>${th}</tr></thead><tbody>${tr || `<tr><td colspan="${columns.length}" class="card-empty">No results</td></tr>`}</tbody></table>`;
@@ -255,9 +257,9 @@ export function renderComments(comments, page = 1, pageSize = 20, { keyword = ''
     <ul class="comments-list">${rows.map((c) => `
       <li>
         <div class="meta">
-          <span>${c.feedback_date || '—'}</span>
-          <span>${c.group_code_clean || '—'}</span>
-          <span>${c.instructor_name_clean || '—'}</span>
+          <span>${escapeHtml(c.feedback_date || '—')}</span>
+          <span>${escapeHtml(c.group_code_clean || '—')}</span>
+          <span>${escapeHtml(c.instructor_name_clean || '—')}</span>
         </div>
         ${escapeHtml(c.student_comment)}
       </li>
@@ -300,13 +302,7 @@ export function bindWordFrequency(panel, callback) {
   });
 }
 
-export function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+export { escapeHtml };
 
 export function renderDataQuality(overview, idx) {
   const unmappedDistinct = new Set(idx.unmappedFeedback.map((f) => f.feedback_id)).size;

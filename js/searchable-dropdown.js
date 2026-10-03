@@ -1,3 +1,5 @@
+import { escapeHtml } from './core/escape.js';
+
 /** Lightweight searchable select — no framework deps. */
 
 export function createSearchableSelect({
@@ -12,7 +14,7 @@ export function createSearchableSelect({
     <label for="${id}-trigger">${label}</label>
     <div class="searchable-select" data-id="${id}">
       <button type="button" class="searchable-select-trigger" id="${id}-trigger" aria-haspopup="listbox" aria-expanded="false">
-        <span class="${selected ? '' : 'placeholder'}">${display}</span>
+        <span class="${selected ? '' : 'placeholder'}">${escapeHtml(display)}</span>
         <span class="chevron">▾</span>
       </button>
       <div class="searchable-dropdown" role="listbox">
@@ -40,7 +42,7 @@ export function createSearchableSelect({
     }
     optionsEl.innerHTML = filtered.map((o, i) => `
       <div class="searchable-option${o.value === value ? ' selected' : ''}${i === highlightIdx ? ' highlighted' : ''}"
-           role="option" data-value="${o.value}" tabindex="-1">${o.label}</div>
+           role="option" data-value="${escapeHtml(o.value)}" tabindex="-1">${escapeHtml(o.label)}</div>
     `).join('');
     optionsEl.querySelectorAll('.searchable-option').forEach((el) => {
       el.addEventListener('mousedown', (e) => {

@@ -64,6 +64,14 @@ export async function commitImport(db, input) {
     const result = await classifyPrepared(tx, repo, prepared, input.asOf);
     const changedSincePreview = input.previewCounts ? !countsMatch(result.counts, input.previewCounts) : false;
     const validRows = result.rows.filter((row) => row.status === "valid");
+    if (!validRows.length) {
+      throw new AppError(
+        "NOTHING_TO_IMPORT",
+        "Nothing was imported. This file has no valid rows. Duplicates, conflicts, and errors are not imported.",
+        400,
+        { counts: result.counts, changedSincePreview },
+      );
+    }
     const importId = `IMP_${randomUUID()}`;
     await repo.insertImport(tx, {
       id: importId,

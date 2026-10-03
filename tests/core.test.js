@@ -115,7 +115,9 @@ describe("shared core", () => {
     assert.equal(session.rows[1].status, "valid");
     assert.equal(session.rows[1].preview[0].group_code, null);
     assert.equal(session.rows[1].preview[0].activity_type, "DIPLOMA");
+    assert.equal(session.rows[1].preview[0].diploma_type, "MBA");
     assert.equal(session.rows[1].preview[0].status_clean, null);
+    assert.equal(session.rows[0].preview[0].diploma_type, null);
   });
 
   it("accepts feedback and events", () => {

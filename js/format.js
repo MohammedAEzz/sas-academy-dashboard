@@ -1,3 +1,5 @@
+import { escapeHtml } from './core/escape.js';
+
 const MONTH_START = '2024-03';
 
 export function fmt(value, type = 'text') {
@@ -36,7 +38,7 @@ export function fmt(value, type = 'text') {
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
   const s = String(value).trim();
-  return s || '—';
+  return s ? escapeHtml(s) : '—';
 }
 
 export function fmtAvg(sum, count, type = 'rating') {

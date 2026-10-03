@@ -9,6 +9,7 @@ import {
 } from '../components.js';
 import { renderBarChart, renderLineChart, colorFor, activityColor } from '../charts.js';
 import { statusBadge, activityTypeLabel, isPlannedSession } from '../format.js';
+import { escapeHtml } from '../core/escape.js';
 import { navigate } from '../router.js';
 
 let instState = { search: '', sortKey: 'hours', sortDir: 'desc', page: 1, minFeedback: 10, topN: 5 };
@@ -66,7 +67,7 @@ export function renderInstructors(app, { data, idx }) {
   app.innerHTML = `
     ${renderAnswerBand({
       eyebrow: 'Instructor contribution',
-      title: `${byHours[0]?.name || 'No instructor'} leads delivery with ${fmt(byHours[0]?.sessionMetrics.completedHours, 'hours')}`,
+      title: `${escapeHtml(byHours[0]?.name || 'No instructor')} leads delivery with ${fmt(byHours[0]?.sessionMetrics.completedHours, 'hours')}`,
       summary: `${fmt(activeCount, 'int')} of ${fmt(rows.length, 'int')} instructors are active on the roster. The top five account for ${topFiveShare}% of completed teaching hours, a workload concentration signal rather than observed capacity.`,
       metrics: [
         { label: 'Instructors', value: fmt(rows.length, 'int') },
@@ -83,7 +84,7 @@ export function renderInstructors(app, { data, idx }) {
     </div>
     <div class="story-grid">
       <section class="evidence-panel story-primary"><div class="panel-header"><div><h3>Completed teaching hours</h3><p>Volume leaders under the current filters</p></div></div><div class="chart-container tall" id="rank-hours"></div></section>
-      <aside class="insight-panel story-support"><div class="panel-kicker">Workload signal</div><h3>${topFiveShare}% of hours sit with five instructors</h3><p>High contribution does not prove overload because contracted hours and availability are absent.</p><ul class="insight-list">${byHours.slice(0, 5).map((row) => `<li><span>${row.name}</span><strong>${fmt(row.sessionMetrics.completedHours, 'hours')}</strong></li>`).join('')}</ul></aside>
+      <aside class="insight-panel story-support"><div class="panel-kicker">Workload signal</div><h3>${topFiveShare}% of hours sit with five instructors</h3><p>High contribution does not prove overload because contracted hours and availability are absent.</p><ul class="insight-list">${byHours.slice(0, 5).map((row) => `<li><span>${escapeHtml(row.name)}</span><strong>${fmt(row.sessionMetrics.completedHours, 'hours')}</strong></li>`).join('')}</ul></aside>
     </div>
 
     ${renderSectionIntro('2 · Range and quality', 'Breadth, learner rating, and forward work', 'Ratings always carry n; planned work never enters achievement.')}
@@ -97,10 +98,10 @@ export function renderInstructors(app, { data, idx }) {
     ${renderSectionIntro('3 · Detail', 'Instructor roster', 'Sort a metric or open a person profile for delivery, expertise, and experience.')}
     ${renderTableCard({
       title: 'Instructor roster',
-      toolbar: `<input type="search" class="search-input" id="inst-search" placeholder="Search instructor…" value="${instState.search}">`,
+      toolbar: `<input type="search" class="search-input" id="inst-search" placeholder="Search instructor…" value="${escapeHtml(instState.search)}">`,
       tableHtml: renderTable({
         columns: [
-          { key: 'name', label: 'Instructor', render: (row) => `<strong>${row.name}</strong>` },
+          { key: 'name', label: 'Instructor', render: (row) => `<strong>${escapeHtml(row.name)}</strong>` },
           { key: 'status', label: 'Status', render: (row) => `<span class="badge ${row.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${row.status}</span>` },
           { key: 'completed', label: 'Groups', num: true, render: (row) => fmt(row.completedGroups, 'int') },
           { key: 'hours', label: 'Hours', num: true, render: (row) => fmt(row.sessionMetrics.completedHours, 'int') },
@@ -157,7 +158,7 @@ export function renderInstructorProfile(app, { data, idx }, instructorId) {
   app.innerHTML = `
     <a class="back-link" href="#/instructors">← Back to Instructors</a>
     <header class="profile-header">
-      <div><div class="answer-eyebrow" style="color:var(--cat-1)">Instructor profile</div><h2>${metrics.instructor.instructor_name_clean}</h2><p>Contributed ${fmt(metrics.sessionMetrics.completedHours, 'hours')} across ${fmt(metrics.completedGroups, 'int')} completed groups and ${fmt(metrics.courses, 'int')} courses.</p><div class="badges" style="margin-top:12px"><span class="badge ${badgeClass}">${metrics.instructor.status}</span></div></div>
+      <div><div class="answer-eyebrow" style="color:var(--cat-1)">Instructor profile</div><h2>${escapeHtml(metrics.instructor.instructor_name_clean)}</h2><p>Contributed ${fmt(metrics.sessionMetrics.completedHours, 'hours')} across ${fmt(metrics.completedGroups, 'int')} completed groups and ${fmt(metrics.courses, 'int')} courses.</p><div class="badges" style="margin-top:12px"><span class="badge ${badgeClass}">${escapeHtml(metrics.instructor.status)}</span></div></div>
       <div class="profile-header-aside"><strong>${metrics.feedback.avgSatisfaction != null ? fmt(metrics.feedback.avgSatisfaction, 'rating') : '—'}</strong><span>learner rating · n=${fmt(metrics.feedback.distinctCount, 'int')}</span></div>
     </header>
     <div class="metric-strip">
@@ -175,7 +176,7 @@ export function renderInstructorProfile(app, { data, idx }, instructorId) {
         <section class="evidence-panel story-half"><div class="panel-header"><div><h3>Monthly teaching hours</h3><p>Completed hours only</p></div></div><div class="chart-container" id="profile-hours"></div></section>
         <section class="detail-panel story-half upcoming-panel"><div class="panel-header" style="padding:20px 20px 0"><div><h3>Upcoming assignments</h3><p>Visually separated from historical contribution</p></div></div><div class="table-wrap"><table class="data-table table-mobile-compact"><thead><tr><th>Date</th><th>Group</th><th>Course</th><th class="num">Hours</th></tr></thead><tbody>${upcoming.slice(0, 10).map((session) => `<tr><td>${fmt(session.session_date, 'date')}</td><td>${fmt(session.group_code)}</td><td>${fmt(session.course_name_clean)}</td><td class="num">${fmt(session.duration_hours, 'number')}</td></tr>`).join('') || '<tr><td colspan="4" class="card-empty">No upcoming assignments</td></tr>'}</tbody></table></div></section>
       </div>
-      <details class="detail-panel method-details"><summary style="padding:16px">Open group history (${fmt(metrics.activities.length, 'int')} activity records)</summary><div class="table-wrap"><table class="data-table table-mobile-compact"><thead><tr><th>Group</th><th>Course</th><th>Type</th><th>Status</th></tr></thead><tbody>${metrics.activities.map((activity) => `<tr class="clickable" data-group="${activity.group_code}"><td>${activity.group_code}</td><td>${fmt(activity.course_name_clean)}</td><td>${activityTypeLabel(activity.activity_type)}</td><td>${statusBadge(activity.status_clean)}</td></tr>`).join('')}</tbody></table></div></details>
+      <details class="detail-panel method-details"><summary style="padding:16px">Open group history (${fmt(metrics.activities.length, 'int')} activity records)</summary><div class="table-wrap"><table class="data-table table-mobile-compact"><thead><tr><th>Group</th><th>Course</th><th>Type</th><th>Status</th></tr></thead><tbody>${metrics.activities.map((activity) => `<tr class="clickable" data-group="${escapeHtml(activity.group_code)}"><td>${escapeHtml(activity.group_code)}</td><td>${fmt(activity.course_name_clean)}</td><td>${activityTypeLabel(activity.activity_type)}</td><td>${statusBadge(activity.status_clean)}</td></tr>`).join('')}</tbody></table></div></details>
     </section>
 
     <section class="profile-section">

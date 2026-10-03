@@ -10,6 +10,7 @@ import { renderBarChart, renderLineChart, colorFor, completedStyle, plannedStyle
 import { statusBadge, activityTypeLabel, isHistoricalSession, isPlannedSession, monthKey } from '../format.js';
 import { navigate } from '../router.js';
 import { clearFilters } from '../filters.js';
+import { escapeHtml } from '../core/escape.js';
 
 let groupsState = { search: '', sortKey: 'start', sortDir: 'desc', page: 1 };
 let detailTimelineExpanded = false;
@@ -75,7 +76,7 @@ export function renderGroups(app, { data, idx }) {
   }
 
   const columns = [
-    { key: 'groupCode', label: 'Group', render: (row) => `<strong>${row.groupCode}</strong><div class="table-sub">${activityTypeLabel(row.type)}</div>` },
+    { key: 'groupCode', label: 'Group', render: (row) => `<strong>${escapeHtml(row.groupCode)}</strong><div class="table-sub">${activityTypeLabel(row.type)}</div>` },
     { key: 'course', label: 'Course', render: (row) => fmt(row.course) },
     { key: 'instructors', label: 'Lead instructor(s)', render: (row) => fmt(row.instructors.slice(0, 2).join(', ')) },
     { key: 'start', label: 'Delivery window', render: (row) => `${fmt(row.start, 'date')}<div class="table-sub">to ${fmt(row.end, 'date')}</div>` },
@@ -103,7 +104,7 @@ export function renderGroups(app, { data, idx }) {
     </div>
     ${renderSectionIntro('2 · Detail', 'Group register', 'Search, sort, then open a row for the designed group story.')}
     ${renderTableCard({
-      toolbar: `<input type="search" class="search-input" id="group-search" placeholder="Search group, course, instructor…" value="${groupsState.search}">`,
+      toolbar: `<input type="search" class="search-input" id="group-search" placeholder="Search group, course, instructor…" value="${escapeHtml(groupsState.search)}">`,
       tableHtml: renderTable({ columns, rows: pageRows, sortKey: groupsState.sortKey, sortDir: groupsState.sortDir, id: 'groups-table' }).replace('class="data-table"', 'class="data-table table-mobile-compact"'),
       footer: `<span>Showing ${pageRows.length} of ${fmt(total, 'int')}</span><div class="pagination">Page ${page} of ${pages}<button class="btn btn-sm" id="gp-prev" ${page <= 1 ? 'disabled' : ''}>Prev</button><button class="btn btn-sm" id="gp-next" ${page >= pages ? 'disabled' : ''}>Next</button></div>`,
     })}
@@ -157,12 +158,12 @@ export function renderGroupDetail(app, { data, idx }, groupCode) {
   app.innerHTML = `
     <a class="back-link" href="#/groups">← Back to Groups</a>
     <header class="profile-header">
-      <div><div class="answer-eyebrow" style="color:var(--cat-1)">Group profile</div><h2>${code}</h2><p>${activityTypeLabel(gm.type)} · ${fmt(gm.degree)} · ${courses.map(fmt).join(' · ') || '—'}</p><div class="badges" style="margin-top:12px">${statusBadge(gm.status)}</div></div>
+      <div><div class="answer-eyebrow" style="color:var(--cat-1)">Group profile</div><h2>${escapeHtml(code)}</h2><p>${activityTypeLabel(gm.type)} · ${fmt(gm.degree)} · ${courses.map(fmt).join(' · ') || '—'}</p><div class="badges" style="margin-top:12px">${statusBadge(gm.status)}</div></div>
       <div class="profile-header-aside"><strong>${fmt(gm.sessionMetrics.completedHours, 'hours')}</strong><span>completed teaching across ${fmt(gm.sessionMetrics.completedCount, 'int')} sessions</span></div>
     </header>
     <div class="metric-strip">
       <div class="metric-strip-item"><span>Sessions</span><strong>${fmt(gm.sessionMetrics.completedCount, 'int')}</strong><small>${fmt(gm.sessionMetrics.plannedCount, 'int')} planned</small></div>
-      <div class="metric-strip-item"><span>Instructors</span><strong>${fmt(gm.instructors.length, 'int')}</strong><small>${gm.instructors.slice(0, 2).join(', ') || '—'}</small></div>
+      <div class="metric-strip-item"><span>Instructors</span><strong>${fmt(gm.instructors.length, 'int')}</strong><small>${escapeHtml(gm.instructors.slice(0, 2).join(', ') || '—')}</small></div>
       <div class="metric-strip-item"><span>Satisfaction</span><strong>${gm.feedback.avgSatisfaction != null ? fmt(gm.feedback.avgSatisfaction, 'rating') : '—'}</strong><small>${gm.feedback.satDenom ? `n=${fmt(gm.feedback.satDenom, 'int')}` : 'N/A'}</small></div>
       <div class="metric-strip-item"><span>Students</span><strong>${gm.students != null ? fmt(gm.students, 'int') : 'N/A'}</strong><small>Source coverage is 17% overall</small></div>
     </div>

@@ -53,17 +53,25 @@ describe("import storage", () => {
     assert.equal(preview.counts.valid, 1);
     const other = await previewImport(db, { dataset: "instructors", filename: "b.csv", buffer: second });
     await commitImport(db, { dataset: "instructors", filename: "b.csv", buffer: second, sha256: other.sha256 });
-    const committed = await commitImport(db, {
-      dataset: "instructors",
-      filename: "a.csv",
-      buffer: first,
-      sha256: preview.sha256,
-      previewCounts: preview.counts,
-    });
-    assert.equal(committed.changedSincePreview, true);
-    assert.equal(committed.imported, 0);
-    assert.equal(committed.counts.duplicate, 1);
-    assert.equal(await createRepository(db).countRecords(), 1);
+    await assert.rejects(
+      () => commitImport(db, {
+        dataset: "instructors",
+        filename: "a.csv",
+        buffer: first,
+        sha256: preview.sha256,
+        previewCounts: preview.counts,
+      }),
+      (error) => {
+        assert.equal(error.code, "NOTHING_TO_IMPORT");
+        assert.equal(error.status, 400);
+        assert.equal(error.details.changedSincePreview, true);
+        assert.equal(error.details.counts.duplicate, 1);
+        return true;
+      },
+    );
+    const repo = createRepository(db);
+    assert.equal(await repo.countImports(), 1);
+    assert.equal(await repo.countRecords(), 1);
   });
 
   it("rejects a second insert of an active key and leaves the database empty", async () => {
@@ -154,7 +162,7 @@ describe("import storage", () => {
     assert.deepEqual(data.instructors, []);
     assert.deepEqual(data.sessions, []);
     assert.equal(data.meta.importCount, 0);
-    assert.ok(data.meta.lastUpdatedAt);
+    assert.equal(data.meta.lastUpdatedAt, null);
   });
 
   it("does not modify base instructor JSON when a conflicting row is committed", async () => {
@@ -164,10 +172,13 @@ describe("import storage", () => {
     ]);
     const preview = await previewImport(db, { dataset: "instructors", filename: "conflict.csv", buffer });
     assert.equal(preview.counts.conflict, 1);
-    const committed = await commitImport(db, {
-      dataset: "instructors", filename: "conflict.csv", buffer, sha256: preview.sha256,
-    });
-    assert.equal(committed.imported, 0);
+    await assert.rejects(
+      () => commitImport(db, {
+        dataset: "instructors", filename: "conflict.csv", buffer, sha256: preview.sha256,
+      }),
+      (error) => error.code === "NOTHING_TO_IMPORT" && error.status === 400,
+    );
+    assert.equal(await createRepository(db).countImports(), 0);
     assert.deepEqual(readFileSync(instructorsFile), before);
     const data = await loadPublicData(db);
     assert.deepEqual(data.instructors, []);
@@ -186,5 +197,58 @@ describe("import storage", () => {
       () => commitImport(db, { dataset: "courses", filename: "courses.csv", buffer, sha256: preview.sha256 }),
       (error) => error.code === "ALREADY_IMPORTED",
     );
+  });
+
+  it("stamps lastUpdatedAt from the latest active import that stored a row", async () => {
+    const firstFile = csvBuffer("instructors", [
+      { instructor_name: "Layla Hassan", title: "Dr.", status: "Active" },
+    ]);
+    const firstPreview = await previewImport(db, { dataset: "instructors", filename: "first.csv", buffer: firstFile });
+    const first = await commitImport(db, {
+      dataset: "instructors", filename: "first.csv", buffer: firstFile, sha256: firstPreview.sha256,
+    });
+    const afterFirst = await loadPublicData(db);
+    assert.equal(afterFirst.meta.importCount, 1);
+    assert.ok(afterFirst.meta.lastUpdatedAt);
+
+    const emptyFile = csvBuffer("instructors", [
+      { instructor_name: "Ahmed Tealeb", title: "Eng.", status: "Not Active" },
+    ]);
+    const emptyPreview = await previewImport(db, { dataset: "instructors", filename: "empty.csv", buffer: emptyFile });
+    assert.equal(emptyPreview.counts.valid, 0);
+    await assert.rejects(
+      () => commitImport(db, {
+        dataset: "instructors", filename: "empty.csv", buffer: emptyFile, sha256: emptyPreview.sha256,
+      }),
+      (error) => {
+        assert.equal(error.code, "NOTHING_TO_IMPORT");
+        assert.match(error.message, /no valid rows/);
+        return true;
+      },
+    );
+    const stillFirst = await loadPublicData(db);
+    assert.equal(stillFirst.meta.lastUpdatedAt, afterFirst.meta.lastUpdatedAt);
+    assert.equal(await createRepository(db).countImports(), 1);
+
+    const secondFile = csvBuffer("courses", [
+      { course_name: "Upload Template Course Alpha", declared_hours: 6, course_category: "Visual Analytics" },
+    ]);
+    const secondPreview = await previewImport(db, { dataset: "courses", filename: "second.csv", buffer: secondFile });
+    const second = await commitImport(db, {
+      dataset: "courses", filename: "second.csv", buffer: secondFile, sha256: secondPreview.sha256,
+    });
+    const afterSecond = await loadPublicData(db);
+    assert.equal(afterSecond.meta.importCount, 2);
+    assert.ok(afterSecond.meta.lastUpdatedAt >= afterFirst.meta.lastUpdatedAt);
+
+    await revertImport(db, { importId: second.importId, reason: "drop latest" });
+    const afterRevertLatest = await loadPublicData(db);
+    assert.equal(afterRevertLatest.meta.importCount, 1);
+    assert.equal(afterRevertLatest.meta.lastUpdatedAt, afterFirst.meta.lastUpdatedAt);
+
+    await revertImport(db, { importId: first.importId, reason: "drop remaining" });
+    const cleared = await loadPublicData(db);
+    assert.equal(cleared.meta.importCount, 0);
+    assert.equal(cleared.meta.lastUpdatedAt, null);
   });
 });

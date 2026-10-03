@@ -1,4 +1,5 @@
-import { data, ready } from './data.js';
+import { data, ready, onDataReload, reloadCombinedData } from './data.js';
+import { describeFreshness } from './domain/freshness.js';
 import { buildIndexes } from './indexes.js';
 import { renderFilterBar, bindFilterUpdates, renderDataQuality } from './components.js';
 import { startRouter } from './router.js';
@@ -9,6 +10,8 @@ import { renderInstructors, renderInstructorProfile } from './pages/instructors.
 import { renderFeedback } from './pages/feedback.js';
 import { renderPrograms } from './pages/programs.js';
 import { renderForecast } from './pages/forecast.js';
+import { renderData } from './pages/data.js';
+import { escapeHtml } from './core/escape.js';
 
 let idx = null;
 
@@ -43,6 +46,9 @@ function renderPage(parts) {
     case 'forecast':
       renderForecast(app, getContext());
       break;
+    case 'data':
+      renderData(app, { ...getContext(), reload: reloadCombinedData });
+      break;
     default:
       app.innerHTML = '<div class="empty-state">Page not found</div>';
   }
@@ -72,22 +78,32 @@ async function init() {
     });
 
     await ready;
-    idx = buildIndexes(data);
     const filterBar = document.getElementById('filter-bar');
     const dq = document.getElementById('data-quality');
-    dq.innerHTML = renderDataQuality(data.overview, idx);
+    const freshness = document.getElementById('data-freshness');
+
+    const paintChrome = () => {
+      idx = buildIndexes(data);
+      if (freshness) freshness.textContent = describeFreshness({ lastUpdatedAt: data.meta?.lastUpdatedAt, uploadNotice: data.uploadNotice });
+      dq.innerHTML = renderDataQuality(data.overview, idx);
+      renderFilterBar(filterBar, idx);
+    };
 
     const rerender = () => {
       const parts = (window.location.hash || '#/overview').replace(/^#/, '').split('/').filter(Boolean);
       renderPage(parts);
     };
 
-    renderFilterBar(filterBar, idx);
-    bindFilterUpdates(filterBar, idx, rerender);
+    paintChrome();
+    bindFilterUpdates(filterBar, () => idx, rerender);
+    onDataReload(() => {
+      paintChrome();
+      rerender();
+    });
     startRouter(renderPage);
     window.addEventListener('resize', resizeCharts);
   } catch (err) {
-    document.getElementById('app').innerHTML = `<div class="empty-state">Failed to load data: ${err.message}</div>`;
+    document.getElementById('app').innerHTML = `<div class="empty-state">Failed to load data: ${escapeHtml(err.message)}</div>`;
     console.error(err);
   } finally {
     document.getElementById('loading-state')?.remove();
