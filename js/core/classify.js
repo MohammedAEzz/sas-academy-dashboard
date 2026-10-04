@@ -1,7 +1,9 @@
 /** Row validation and valid | duplicate | conflict | error classification. */
 
 import {
+  columnIds,
   DATASETS,
+  exampleRows,
   RATING_SCORES,
   RATING_VALUES,
   SATISFACTION_SCORES,
@@ -665,6 +667,25 @@ const CLASSIFIERS = {
   events: classifyEvents,
 };
 
+function cellSignature(value) {
+  const text = value == null ? "" : String(value).trim().toLowerCase();
+  return text !== "" && Number.isFinite(Number(text)) ? String(Number(text)) : text;
+}
+
+function rowSignature(dataset, values) {
+  return columnIds(dataset).map((id) => cellSignature(values[id])).join("\u0001");
+}
+
+/** Rows identical to a template example are never imported, so an example file can't reach the dashboard. */
+function exampleRowError(dataset, rowNumber) {
+  return finish(rowNumber, [fail(
+    "row",
+    "",
+    "This is the template's example row, not real data.",
+    "Replace it with your own record or delete the row, then upload again.",
+  )], []);
+}
+
 export function classifyUpload({ dataset, rows, catalog, asOf }) {
   const schema = DATASETS[dataset];
   if (!schema) {
@@ -677,8 +698,10 @@ export function classifyUpload({ dataset, rows, catalog, asOf }) {
   }
   const resolvedAsOf = asOf || todayISO();
   const index = catalog.records[dataset];
+  const examples = new Set(exampleRows(dataset).map((row) => rowSignature(dataset, row)));
   const classified = rows.map((row) => {
     const values = row.values || {};
+    if (examples.has(rowSignature(dataset, values))) return exampleRowError(dataset, row.rowNumber);
     if (dataset === "sessions") return classifySessions(values, row.rowNumber, catalog, index, resolvedAsOf);
     return CLASSIFIERS[dataset](values, row.rowNumber, catalog, index);
   });

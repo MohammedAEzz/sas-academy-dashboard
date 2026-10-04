@@ -50,6 +50,15 @@ describe("admin session", () => {
     assert.equal(blocked.json.error.code, "RATE_LIMITED");
   });
 
+  it("deletes sign-in attempts older than a day when a new attempt is recorded", async () => {
+    await db.query("INSERT INTO login_attempts (client_key, success, attempted_at) VALUES ($1, FALSE, now() - interval '2 days')", ["198.51.100.7"]);
+
+    await call(authHandler, { method: "POST", url: "/api/auth?action=login", body: { password: "nope" } });
+
+    const { rows } = await db.query("SELECT client_key FROM login_attempts");
+    assert.deepEqual(rows.map((row) => row.client_key), ["203.0.113.10"]);
+  });
+
   it("rejects a tampered session cookie", async () => {
     const login = await call(authHandler, {
       method: "POST",

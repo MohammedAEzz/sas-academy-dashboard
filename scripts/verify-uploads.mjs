@@ -8,6 +8,8 @@ import ExcelJS from 'exceljs';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { columnIds } from '../js/core/schema.js';
+import { qaRows } from '../tests/qa-rows.js';
 
 const BASE = process.env.VERIFY_BASE_URL || 'http://127.0.0.1:3100';
 const PASSWORD = process.env.ADMIN_PASSWORD || 'dev-admin-password';
@@ -38,6 +40,18 @@ async function shot(page, name) {
   await page.screenshot({ path, fullPage: true });
   screenshots.push(path);
   console.log('Screenshot:', path);
+}
+
+function csvCell(value) {
+  const text = value == null ? '' : String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/** Realistic rows (not the template examples, which the importer rejects) as a CSV UTF-8 file. */
+function qaCsv(dataset) {
+  const ids = columnIds(dataset);
+  const lines = [ids.join(','), ...qaRows(dataset).map((row) => ids.map((id) => csvCell(row[id])).join(','))];
+  return `\uFEFF${lines.join('\n')}\n`;
 }
 
 async function overviewNumbers(page) {
@@ -142,14 +156,22 @@ async function main() {
   await page.waitForSelector('#upload-file');
   assert(await page.locator('#sign-out').isVisible(), 'signed in');
 
+  // A downloaded Example CSV must never import: every row is the template's example row.
+  await previewFile(page, 'events', join(FIXTURES, 'events-example.csv'));
+  const examplePreview = await page.textContent('#preview-panel');
+  assert(/valid 0/.test(examplePreview) && /error 3/.test(examplePreview), `example CSV rows are rejected: ${examplePreview.slice(0, 160)}`);
+  assert(/template's example row/.test(examplePreview), 'example rows explain how to fix them');
+  assert(await page.locator('#commit-import').isDisabled(), 'example CSV cannot be imported');
+
   for (const dataset of DATASETS) {
-    const filePath = join(FIXTURES, `${dataset}-example.csv`);
+    const filePath = join(FIXTURES, `${dataset}-qa.csv`);
+    writeFileSync(filePath, qaCsv(dataset));
     await previewFile(page, dataset, filePath);
     const previewText = await page.textContent('#preview-panel');
-    assert(/valid [1-9]/.test(previewText), `${dataset} example preview has valid rows: ${previewText.slice(0, 180)}`);
+    assert(/valid [1-9]/.test(previewText), `${dataset} QA preview has valid rows: ${previewText.slice(0, 180)}`);
     await commitPreview(page);
     const success = await page.textContent('#import-success');
-    assert(/Imported [1-9]/.test(success), `${dataset} example committed`);
+    assert(/Imported [1-9]/.test(success), `${dataset} QA rows committed`);
   }
 
   await previewFile(page, 'sessions', xlsxPath);
@@ -196,17 +218,17 @@ async function main() {
 
   await page.goto(`${BASE}/#/data`);
   await page.waitForSelector('#upload-file');
-  const exampleInstructors = join(FIXTURES, 'instructors-example.csv');
+  const exampleInstructors = join(FIXTURES, 'instructors-qa.csv');
   await previewFile(page, 'instructors', exampleInstructors);
   const duplicatePreview = await page.textContent('#preview-panel');
   assert(/imported on/.test(duplicatePreview), 're-upload shows already imported banner');
-  assert(/duplicate 3/.test(duplicatePreview), 're-upload marks every example instructor row as duplicate');
+  assert(/duplicate 3/.test(duplicatePreview), 're-upload marks every instructor row as duplicate');
   assert(await page.locator('#commit-import').isDisabled(), 'import stays disabled when nothing new is valid');
   const sha = createHash('sha256').update(readFileSync(exampleInstructors)).digest('hex');
   const commitParams = new URLSearchParams({
     action: 'commit',
     dataset: 'instructors',
-    filename: 'instructors-example.csv',
+    filename: 'instructors-qa.csv',
     sha256: sha,
     previewCounts: JSON.stringify({ total: 3, valid: 0, duplicate: 3, conflict: 0, error: 0 }),
   });
@@ -266,7 +288,7 @@ async function main() {
 
   await page.goto(`${BASE}/#/data`);
   await page.waitForSelector('[data-revert]');
-  const instructorRow = page.locator('tr', { hasText: 'instructors-example.csv' });
+  const instructorRow = page.locator('tr', { hasText: 'instructors-qa.csv' });
   const instructorRevertId = await instructorRow.locator('[data-revert]').getAttribute('data-revert');
   await instructorRow.locator('[data-revert]').click();
   await page.locator('#revert-dialog[open] #revert-confirm').click();

@@ -46,6 +46,7 @@ export const GENERAL_INSTRUCTIONS = [
   "Keep this header row. Enter records starting on row 2. The header is row 1.",
   "CSV files must be saved as CSV UTF-8 so Arabic text stays intact. The example file includes a byte-order mark for Excel.",
   "Dates use YYYY-MM-DD. Times use 24-hour HH:MM.",
+  "The Example sheet and example file only show the format. Example rows are rejected if uploaded unchanged, so replace them with real records.",
   "Instructor and course names must match an existing name (ignoring case, extra spaces, and titles such as Dr.). Upload new instructors or courses before groups, sessions, or feedback that use them.",
   "Group codes look like MBA-G281 or DBA-G12. A code with 4 or more digits is accepted only when that group already exists.",
   "Identical rows are skipped. A row that reuses a key with different details is reported as a conflict and is not imported. Nothing already stored is overwritten.",
@@ -165,23 +166,24 @@ const EXAMPLE_INSTRUCTOR = "Ahmed Tealeb";
 const EXAMPLE_INSTRUCTOR_2 = "Osama Mobarez";
 const EXAMPLE_COURSE = "Leading with Analytics";
 
+/** Template example rows. The importer rejects any row identical to one of these. */
 export function exampleRows(dataset) {
   if (dataset === "instructors") {
     return [
-      { instructor_name: "Layla Hassan", title: "Dr.", status: "Active", full_name_ar: "د. ليلى حسن", system_name_ar: "د. ليلى حسن" },
-      { instructor_name: "Omar Farouk", title: "Eng.", status: "Not Active", full_name_ar: "", system_name_ar: "" },
-      { instructor_name: "Nour El Din", title: "Dr.", status: "Active", full_name_ar: "", system_name_ar: "" },
+      { instructor_name: "Sample Instructor One", title: "Dr.", status: "Active", full_name_ar: "د. مدرب تجريبي", system_name_ar: "د. مدرب تجريبي" },
+      { instructor_name: "Sample Instructor Two", title: "Eng.", status: "Not Active", full_name_ar: "", system_name_ar: "" },
+      { instructor_name: "Sample Instructor Three", title: "Dr.", status: "Active", full_name_ar: "", system_name_ar: "" },
     ];
   }
   if (dataset === "courses") {
     return [
-      { course_name: "Upload Template Course Alpha", declared_hours: 12, course_category: "Visual Analytics" },
-      { course_name: "Upload Template Course Beta", declared_hours: 8, course_category: "Statistical Analytics" },
-      { course_name: "Upload Template Course Gamma", declared_hours: "", course_category: "" },
+      { course_name: "Sample Course Alpha", declared_hours: 12, course_category: "Visual Analytics" },
+      { course_name: "Sample Course Beta", declared_hours: 8, course_category: "Statistical Analytics" },
+      { course_name: "Sample Course Gamma", declared_hours: "", course_category: "" },
     ];
   }
   if (dataset === "groups") {
-    return [990, 991, 992].map((code, index) => ({
+    return [970, 971, 972].map((code, index) => ({
       group_code: `MBA-G${code}`,
       course_name: EXAMPLE_COURSE,
       instructor_name: EXAMPLE_INSTRUCTOR,
@@ -196,7 +198,7 @@ export function exampleRows(dataset) {
   if (dataset === "sessions") {
     return [1, 2, 3].map((number) => ({
       session_date: `2026-11-0${number}`,
-      group_code: "MBA-G990",
+      group_code: "MBA-G970",
       course_name: EXAMPLE_COURSE,
       instructor_name: EXAMPLE_INSTRUCTOR,
       session_number: number,
@@ -213,7 +215,7 @@ export function exampleRows(dataset) {
       response_id: "",
       feedback_date: `2026-11-1${number}`,
       activity_type: "INTERNAL",
-      group_code: "MBA-G990",
+      group_code: "MBA-G970",
       course_name: EXAMPLE_COURSE,
       instructor_names: number === 3 ? `${EXAMPLE_INSTRUCTOR}; ${EXAMPLE_INSTRUCTOR_2}` : EXAMPLE_INSTRUCTOR,
       overall_satisfaction: "Very satisfied",
@@ -224,12 +226,12 @@ export function exampleRows(dataset) {
       rating_leadership: "Above average",
       rating_soft_skills: "Excellent",
       recommendation_score: 9,
-      comment: `TEMPLATE-EXAMPLE-${number} عينة تعليق`,
+      comment: `SAMPLE-COMMENT-${number} عينة تعليق`,
     }));
   }
   return [
-    { event_name: "Template Workshop Alpha", event_type: "WORKSHOP", event_date_start: "2026-11-01", event_date_end: "2026-11-02", participant_count: 20 },
-    { event_name: "Template Bootcamp Beta", event_type: "BOOTCAMP", event_date_start: "2026-12-01", event_date_end: "2026-12-05", participant_count: 40 },
-    { event_name: "Template Hackathon Gamma", event_type: "HACKATHON", event_date_start: "2026-12-12", event_date_end: "2026-12-12", participant_count: 0 },
+    { event_name: "Sample Workshop Alpha", event_type: "WORKSHOP", event_date_start: "2026-11-01", event_date_end: "2026-11-02", participant_count: 20 },
+    { event_name: "Sample Bootcamp Beta", event_type: "BOOTCAMP", event_date_start: "2026-12-01", event_date_end: "2026-12-05", participant_count: 40 },
+    { event_name: "Sample Hackathon Gamma", event_type: "HACKATHON", event_date_start: "2026-12-12", event_date_end: "2026-12-12", participant_count: 0 },
   ];
 }

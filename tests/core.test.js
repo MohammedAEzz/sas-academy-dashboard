@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import ExcelJS from "exceljs";
 import { sha256 } from "../js/core/sha256.js";
 import { columnIds, DATASET_IDS, exampleRows } from "../js/core/schema.js";
+import { qaRows } from "./qa-rows.js";
 import { classifyUpload } from "../js/core/classify.js";
 import { indexDatasets } from "../js/core/catalog.js";
 import { normalizeStartTime } from "../js/core/normalize.js";
@@ -24,7 +25,7 @@ describe("shared core", () => {
     }
   });
 
-  it("template headers match schema columns and example rows are valid against base data", async () => {
+  it("template headers match schema columns and filled template rows are valid against base data", async () => {
     const base = loadBaseData();
     const catalog = indexDatasets(base, []);
     for (const dataset of DATASET_IDS) {
@@ -38,13 +39,72 @@ describe("shared core", () => {
       for (const id of columnIds(dataset)) assert.match(instructions, new RegExp(id));
       const result = classifyUpload({
         dataset,
-        rows: exampleRows(dataset).map((row, index) => values(index + 2, row)),
+        rows: qaRows(dataset).map((row, index) => values(index + 2, row)),
         catalog: indexDatasets(base, []),
         asOf: AS_OF,
       });
       assert.deepEqual(result.counts, { total: 3, valid: 3, duplicate: 0, conflict: 0, error: 0 }, dataset);
       assert.equal(catalog.instructorByKey.size > 0, true);
     }
+  });
+
+  it("rejects rows copied unchanged from a template example, with the row number", () => {
+    const base = loadBaseData();
+    for (const dataset of DATASET_IDS) {
+      const result = classifyUpload({
+        dataset,
+        rows: exampleRows(dataset).map((row, index) => values(index + 2, row)),
+        catalog: indexDatasets(base, []),
+        asOf: AS_OF,
+      });
+      assert.deepEqual(result.counts, { total: 3, valid: 0, duplicate: 0, conflict: 0, error: 3 }, dataset);
+      assert.match(result.rows[0].message, /^Row 2, column row: This is the template's example row/, dataset);
+    }
+  });
+
+  it("accepts an example row once any value is changed", () => {
+    const [row] = exampleRows("instructors");
+    const result = classifyUpload({
+      dataset: "instructors",
+      rows: [values(2, { ...row, instructor_name: "Mona Adel" })],
+      catalog: indexDatasets(loadBaseData(), []),
+      asOf: AS_OF,
+    });
+    assert.equal(result.counts.valid, 1);
+  });
+
+  it("detects a re-upload of historical feedback responses as duplicates", () => {
+    const base = loadBaseData();
+    const label = { 5: "Excellent", 4: "Above average", 3: "Average", 2: "Below average", 1: "Poor" };
+    const responses = new Map();
+    for (const row of base.feedback) {
+      if (!responses.has(row.feedback_id)) responses.set(row.feedback_id, []);
+      responses.get(row.feedback_id).push(row);
+    }
+    const sample = [...responses.values()]
+      .filter((rows) => rows[0].course_name_clean && rows[0].group_match_status === "MAPPED")
+      .slice(0, 50);
+    const rows = sample.map((group, index) => {
+      const first = group[0];
+      return values(index + 2, {
+        feedback_date: first.feedback_date,
+        activity_type: first.activity_type,
+        group_code: first.group_code_clean,
+        course_name: first.course_name_clean,
+        instructor_names: group.map((row) => row.instructor_name_clean).filter(Boolean).join("; "),
+        overall_satisfaction: first.overall_satisfaction,
+        rating_elearning: label[first.rating_elearning_score] || "",
+        rating_guided: label[first.rating_guided_score] || "",
+        rating_project: label[first.rating_project_score] || "",
+        rating_knowledge: label[first.rating_knowledge_score] || "",
+        rating_leadership: label[first.rating_leadership_score] || "",
+        rating_soft_skills: label[first.rating_soft_skills_score] || "",
+        recommendation_score: first.recommendation_score ?? "",
+        comment: first.student_comment || "",
+      });
+    });
+    const result = classifyUpload({ dataset: "feedback", rows, catalog: indexDatasets(base, []), asOf: AS_OF });
+    assert.deepEqual(result.counts, { total: 50, valid: 0, duplicate: 50, conflict: 0, error: 0 });
   });
 
   it("accepts a new instructor", () => {

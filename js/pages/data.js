@@ -103,7 +103,7 @@ function columnReference(dataset) {
 
 function templatesSection() {
   return `<section class="data-section" aria-labelledby="templates-heading">
-    <div class="section-intro"><div><span>Templates</span><h3 id="templates-heading">Download a template, then upload one dataset at a time</h3></div><p>Templates and the column reference are available without signing in.</p></div>
+    <div class="section-intro"><div><span>Templates</span><h3 id="templates-heading">Download a template, then upload one dataset at a time</h3></div><p>Templates and the column reference are available without signing in. Example files show the format only: example rows are rejected if uploaded unchanged.</p></div>
     <div class="dataset-grid">
       ${DATASET_IDS.map((id) => {
         const copy = FEEDS[id];

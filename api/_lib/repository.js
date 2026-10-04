@@ -213,6 +213,8 @@ export function createRepository(db) {
         `INSERT INTO login_attempts (client_key, success) VALUES ($1, $2)`,
         [client, success],
       );
+      // Attempts only matter for the 15-minute window; don't keep client IPs longer than a day.
+      await query(db, `DELETE FROM login_attempts WHERE attempted_at < now() - interval '1 day'`);
     },
   };
 }

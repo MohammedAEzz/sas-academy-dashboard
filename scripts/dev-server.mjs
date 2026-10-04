@@ -73,6 +73,8 @@ async function bootDatabase() {
 function safeFile(urlPath) {
   const decoded = decodeURIComponent(urlPath.split('?')[0]);
   const relative = decoded === '/' ? 'index.html' : decoded.replace(/^\/+/, '');
+  // Never serve dotfiles such as .env.local (database URL, admin password) or .vercel/.
+  if (relative.split('/').some((segment) => segment.startsWith('.'))) return null;
   const full = normalize(join(root, relative));
   if (full !== root && !full.startsWith(`${root}/`)) return null;
   return full;
