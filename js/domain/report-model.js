@@ -1,6 +1,6 @@
 /**
  * Pure report assembly. Chart specs and metrics come from the same builders the pages render.
- * No DOM. Arabic script is omitted from cell text; instructor names use instructor_name_clean.
+ * No DOM. Arabic text is kept (the renderer shapes it and lays it out right-to-left).
  */
 import { describeAppliedFilters, withFilters } from '../filters.js';
 import {
@@ -33,18 +33,16 @@ export const APPENDIX_ROW_LIMIT = 300;
 
 export const SECTION_ORDER = ['overview', 'groups', 'instructors', 'feedback', 'programs', 'forecast'];
 
-const ARABIC = /[\u0600-\u06FF]/;
+// Arabic, Arabic Supplement, and the presentation forms the PDF font can draw.
+export const ARABIC = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/;
 const EXTRA = new Set(['—', '–', '’', '‘', '“', '”', '…', '•']);
+// Neither embedded font has these glyphs; spell them out instead of dropping them.
+const SUBSTITUTES = { '≤': '<=', '≥': '>=' };
 
-/** Characters the embedded Latin font can draw. Arabic script is omitted. */
+/** Characters the embedded fonts can draw: Latin-1, common punctuation and Arabic script. */
 export function pdfText(value) {
   if (value == null || value === '') return '—';
   const raw = String(value);
-  if (ARABIC.test(raw)) {
-    const latin = [...raw].filter((ch) => !ARABIC.test(ch)).join('').replace(/\s+/g, ' ').trim();
-    if (/[A-Za-z0-9]/.test(latin)) return pdfText(latin);
-    return '(Arabic text omitted)';
-  }
   let out = '';
   for (const ch of raw) {
     const code = ch.codePointAt(0);
@@ -52,7 +50,11 @@ export function pdfText(value) {
       out += ' ';
       continue;
     }
-    if ((code >= 32 && code <= 255) || EXTRA.has(ch)) out += ch;
+    if (SUBSTITUTES[ch]) {
+      out += SUBSTITUTES[ch];
+      continue;
+    }
+    if ((code >= 32 && code <= 255) || EXTRA.has(ch) || ARABIC.test(ch)) out += ch;
   }
   const cleaned = out.replace(/\s+/g, ' ').trim();
   return cleaned || '—';
@@ -293,7 +295,6 @@ function feedbackSection(data, idx) {
     ],
     notes: [
       `Comparison uses ${mode === 'course' ? 'courses' : 'instructors'} (the feedback page default is courses).`,
-      'Comments that contain Arabic script are omitted from the PDF. They remain in the dashboard explorer.',
     ],
     charts: [
       chart('feedback-trend', 'Satisfaction trend', 'Monthly average overall rating.', 'line', specs.charts.trend),

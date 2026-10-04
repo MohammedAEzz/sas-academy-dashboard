@@ -3,7 +3,7 @@
  * Libraries and the Latin font are loaded only when an export starts.
  */
 import { buildChartOption, withExportCharts } from './charts.js';
-import { buildReport } from './domain/report-model.js';
+import { ARABIC, buildReport } from './domain/report-model.js';
 
 const MARGIN_X = 14;
 const MARGIN_TOP = 18;
@@ -14,8 +14,29 @@ const MUTED = [82, 81, 78];
 const RULE = [229, 228, 224];
 const ZEBRA = [238, 245, 253];
 const WHITE = [255, 255, 255];
+const LATIN_FONT = 'NotoSans';
+// Amiri covers Arabic (including the joined presentation forms jsPDF shapes into) and Latin,
+// so a mixed Arabic/English string can be drawn in one font.
+const ARABIC_FONT = 'Amiri';
+// Logical (typed) order in, visual order out, right-to-left paragraph, mirrored brackets.
+const RTL_TEXT_OPTIONS = {
+  isInputVisual: false,
+  isOutputVisual: true,
+  isInputRtl: true,
+  isOutputRtl: false,
+  isSymmetricSwapping: true,
+};
 
 let librariesPromise = null;
+let arabicFontsPromise = null;
+
+function hasArabic(value) {
+  return ARABIC.test(Array.isArray(value) ? value.join(' ') : String(value ?? ''));
+}
+
+function fontFor(text) {
+  return hasArabic(text) ? ARABIC_FONT : LATIN_FONT;
+}
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -65,6 +86,26 @@ async function ensureLibraries() {
   return librariesPromise;
 }
 
+async function fetchFont(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error('Could not load the report font.');
+  return toBase64(await response.arrayBuffer());
+}
+
+/** The Arabic font (~0.8 MB) is downloaded only for reports that contain Arabic text. */
+function ensureArabicFonts() {
+  if (!arabicFontsPromise) {
+    arabicFontsPromise = Promise.all([
+      fetchFont('/assets/Amiri-Regular.ttf'),
+      fetchFont('/assets/Amiri-Bold.ttf'),
+    ]).then(([regular, bold]) => ({ regular, bold })).catch((error) => {
+      arabicFontsPromise = null;
+      throw error;
+    });
+  }
+  return arabicFontsPromise;
+}
+
 function toBase64(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = '';
@@ -106,15 +147,45 @@ function chartToPng(item) {
   }
 }
 
-function createDocument(fonts) {
+function createDocument(fonts, arabicFonts) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
   doc.addFileToVFS('NotoSans-Regular.ttf', fonts.regular);
   doc.addFileToVFS('NotoSans-Bold.ttf', fonts.bold);
-  doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
-  doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
-  doc.setFont('NotoSans', 'normal');
+  doc.addFont('NotoSans-Regular.ttf', LATIN_FONT, 'normal');
+  doc.addFont('NotoSans-Bold.ttf', LATIN_FONT, 'bold');
+  if (arabicFonts) {
+    doc.addFileToVFS('Amiri-Regular.ttf', arabicFonts.regular);
+    doc.addFileToVFS('Amiri-Bold.ttf', arabicFonts.bold);
+    doc.addFont('Amiri-Regular.ttf', ARABIC_FONT, 'normal');
+    doc.addFont('Amiri-Bold.ttf', ARABIC_FONT, 'bold');
+    useRtlLayoutForArabic(doc);
+  }
+  doc.setFont(LATIN_FONT, 'normal');
   return doc;
+}
+
+/**
+ * Every string reaches the page through doc.text (ours and jspdf-autotable's). jsPDF already
+ * shapes Arabic letters; here Arabic strings also get right-to-left bidi reordering.
+ */
+function useRtlLayoutForArabic(doc) {
+  const drawText = doc.text;
+  doc.text = function textWithRtl(text, x, y, options, ...rest) {
+    const rtl = hasArabic(text) ? { ...(options || {}), ...RTL_TEXT_OPTIONS } : options;
+    return drawText.call(this, text, x, y, rtl, ...rest);
+  };
+}
+
+/** Draw one line, right-aligned in the Arabic font when it contains Arabic. */
+function drawLine(doc, line, y, style) {
+  if (hasArabic(line)) {
+    doc.setFont(ARABIC_FONT, style);
+    doc.text(line, doc.internal.pageSize.getWidth() - MARGIN_X, y, { align: 'right' });
+    doc.setFont(LATIN_FONT, style);
+    return;
+  }
+  doc.text(line, MARGIN_X, y);
 }
 
 function contentWidth(doc) {
@@ -137,21 +208,22 @@ function ensure(doc, cursor, height) {
 }
 
 function writeLines(doc, cursor, lines, { size = 11, color = INK, style = 'normal', gap = 4.6 } = {}) {
-  doc.setFont('NotoSans', style);
+  doc.setFont(LATIN_FONT, style);
   doc.setFontSize(size);
   doc.setTextColor(...color);
   for (const line of lines) {
     ensure(doc, cursor, gap + 1);
-    doc.text(line, MARGIN_X, cursor.y);
+    drawLine(doc, line, cursor.y, style);
     cursor.y += gap;
   }
 }
 
 function paragraph(doc, cursor, text, options = {}) {
   const width = contentWidth(doc);
-  doc.setFont('NotoSans', options.style || 'normal');
+  const value = String(text || '');
+  doc.setFont(fontFor(value), options.style || 'normal');
   doc.setFontSize(options.size || 11);
-  const lines = doc.splitTextToSize(String(text || ''), width);
+  const lines = doc.splitTextToSize(value, width);
   writeLines(doc, cursor, lines, options);
 }
 
@@ -160,12 +232,13 @@ function heading(doc, cursor, text, level = 1) {
   const gap = level === 1 ? 8 : 6.5;
   if (cursor.y > MARGIN_TOP + 1) cursor.y += level === 1 ? 5 : 3.5;
   ensure(doc, cursor, gap + 4);
-  doc.setFont('NotoSans', 'bold');
+  doc.setFont(fontFor(text), 'bold');
   doc.setFontSize(size);
   doc.setTextColor(...NAVY);
   const lines = doc.splitTextToSize(text, contentWidth(doc));
+  doc.setFont(LATIN_FONT, 'bold');
   for (const line of lines) {
-    doc.text(line, MARGIN_X, cursor.y);
+    drawLine(doc, line, cursor.y, 'bold');
     cursor.y += gap;
   }
   doc.setDrawColor(42, 120, 214);
@@ -234,6 +307,11 @@ function drawTable(doc, cursor, item) {
     },
     alternateRowStyles: { fillColor: ZEBRA },
     tableWidth: contentWidth(doc),
+    didParseCell(hook) {
+      if (!hasArabic(hook.cell.text)) return;
+      hook.cell.styles.font = ARABIC_FONT;
+      hook.cell.styles.halign = 'right';
+    },
   });
   cursor.y = doc.lastAutoTable.finalY + 8;
 }
@@ -257,7 +335,7 @@ function drawChart(doc, cursor, item) {
   const titleLines = doc.splitTextToSize(item.title, maxW);
   for (const line of titleLines) {
     ensure(doc, cursor, 5);
-    doc.text(line, MARGIN_X, cursor.y);
+    drawLine(doc, line, cursor.y, 'bold');
     cursor.y += 5;
   }
   const x = MARGIN_X + (maxW - width) / 2;
@@ -269,7 +347,7 @@ function drawChart(doc, cursor, item) {
   const caption = doc.splitTextToSize(item.caption || '', maxW);
   for (const line of caption) {
     ensure(doc, cursor, 4);
-    doc.text(line, MARGIN_X, cursor.y);
+    drawLine(doc, line, cursor.y, 'normal');
     cursor.y += 4;
   }
   cursor.y += 4;
@@ -336,7 +414,8 @@ export async function downloadReportPdf({ data, idx, scope, filters, onProgress 
     filters,
     generatedAt: new Date(),
   }));
-  const doc = createDocument(fonts);
+  const arabicFonts = hasArabic(JSON.stringify(model)) ? await ensureArabicFonts() : null;
+  const doc = createDocument(fonts, arabicFonts);
   const cursor = { y: MARGIN_TOP, orientation: 'portrait' };
   drawCover(doc, cursor, model);
   let drawn = 0;

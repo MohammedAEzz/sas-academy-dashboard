@@ -216,6 +216,11 @@ async function main() {
       assert(full.text.includes(phrase), `full PDF contains ${phrase}`);
     }
     console.log('Full PDF', fullPath, 'pages', full.pageCount);
+    // Arabic comments are kept: jsPDF shapes them into Arabic presentation forms (U+FB50-U+FEFF).
+    assert(!full.text.includes('Arabic text omitted'), 'full PDF no longer omits Arabic text');
+    const arabicCounts = full.pages.map((text) => (text.match(/[\uFB50-\uFDFF\uFE70-\uFEFF]/g) || []).length);
+    const arabicPage = arabicCounts.indexOf(Math.max(...arabicCounts)) + 1;
+    assert(arabicCounts[arabicPage - 1] > 0, `full PDF contains shaped Arabic text (densest on page ${arabicPage})`);
 
     await page.evaluate(() => document.getElementById('toggle-more-filters')?.click());
     await page.selectOption('#f-language', 'English');
@@ -231,7 +236,7 @@ async function main() {
 
     const tablePage = full.pages.findIndex((text) => text.includes('Group register')) + 1;
     assert(tablePage > 0, 'found a group-register page');
-    const pngs = await screenshotPdfPages(browser, fullPath, [...new Set([1, 2, 3, 4, tablePage])]);
+    const pngs = await screenshotPdfPages(browser, fullPath, [...new Set([1, 2, 3, 4, tablePage, arabicPage])]);
     console.log('PNG list', pngs.join(', '));
 
     await uploadProofSession();

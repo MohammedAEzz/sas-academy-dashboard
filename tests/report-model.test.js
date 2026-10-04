@@ -5,7 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildIndexes } from '../js/indexes.js';
 import { clearFilters, getFilters, setFilter } from '../js/filters.js';
-import { buildReport, SECTION_ORDER } from '../js/domain/report-model.js';
+import { buildReport, pdfText, SECTION_ORDER } from '../js/domain/report-model.js';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 
@@ -90,4 +90,14 @@ test('a language filter changes KPI counts and is listed on the cover', () => {
   );
   assert.equal(groups.body.length, englishCodes.size);
   clearFilters();
+});
+
+test.describe('pdfText', () => {
+  test.it('keeps Arabic text instead of omitting it', () => {
+    assert.equal(pdfText('  المحاضر  متمكن جدا (SAS) '), 'المحاضر متمكن جدا (SAS)');
+  });
+
+  test.it('spells out comparison signs the embedded fonts cannot draw', () => {
+    assert.equal(pdfText('n≥10, share ≤ 5%'), 'n>=10, share <= 5%');
+  });
 });
